@@ -1,8 +1,7 @@
 # WaveMinder
-Welcome to my marine conservation platform :)
+#Welcome to my marine conservation platform :)
 
-📍 **Core Features**: 
-  🐳 Marine Wildlife Sightings - Users report dolphin, whale, turtle sightings with photos 
+📍 **Core Features**:  🐳 Marine Wildlife Sightings - Users report dolphin, whale, turtle sightings with photos 
   🏝️ Beach Condition Reports - Water quality, pollution levels, cleanup events 
   📈 Ocean Data Dashboard - Real-time marine weather, temperatures, tides 
   📖 Conservation Actions - Beach cleanups, education, participation 
