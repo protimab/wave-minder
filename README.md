@@ -1,5 +1,5 @@
 # WaveMinder
-#Welcome to my marine conservation platform :)
+Welcome to my marine conservation platform :)
 
 📍 **Core Features**:  
 
