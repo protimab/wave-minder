@@ -3,17 +3,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import database
 import auth
-
-# REQUEST MODELS
-class SignupRequest(BaseModel):
-    email: str
-    name: str
-    password: str
-    location: str = None
-
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+import schemas
 
 # FASTAPI
 async def lifespan(app: FastAPI):
@@ -35,8 +25,8 @@ def root():
     return {"message": "WaveMinder"}
 
 # SIGNUP ENDPOINT
-@app.post("/signup")
-def signup(request: SignupRequest):
+@app.post("/signup", response_model=schemas.UserResponse)
+def signup(request: schemas.UserCreate):
     existing_user = database.get_user_by_email(request.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="User already exists")
@@ -52,25 +42,35 @@ def signup(request: SignupRequest):
         location=request.location
     )
 
-    return {
-        "id": user_id,
-        "email": request.email,
-        "name": request.name
-    }
+    return schemas.UserResponse(
+        id=user_id,
+        email=request.email,
+        name=request.name,
+        location=request.location,
+        created_at=""  
+    )
 
 
 # LOGIN ENDPOINT
-@app.post("/login")
-def login(request: LoginRequest):
+@app.post("/login", response_model=schemas.Token)
+def login(request: schemas.UserCreate):
     user = auth.authenticate_user(request.email, request.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = auth.create_access_token(user_email=user[1])  # index 1 -> email
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    return schemas.Token(access_token=access_token, token_type="bearer")
+
+# PROTECTED ENDPOINT
+@app.get("/me", response_model=schemas.UserResponse)
+def read_me(current_user=Depends(auth.get_current_user)):
+    return schemas.UserResponse(
+        id=current_user[0],
+        email=current_user[1],
+        name=current_user[2],
+        location=current_user[4],
+        created_at=str(current_user[6])
+    )
 
 # TESTING
 def test_db():
