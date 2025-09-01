@@ -166,5 +166,36 @@ def get_user_sightings(user_id):
     conn.close()
     return sightings
 
+def get_all_sightings(limit: int = 100, offset: int = 0):
+    """Get all marine sightings """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ms.*, u.name as user_name 
+        FROM marine_sightings ms 
+        JOIN users u ON ms.user_id = u.id 
+        ORDER BY ms.date_spotted DESC, ms.created_at DESC 
+        LIMIT ? OFFSET ?
+    ''', (limit, offset))
+    sightings = cursor.fetchall()
+    conn.close()
+    return sightings
+
+def get_sighting_by_id(sighting_id: int):
+    """Get a marine sighting by ID"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ms.*, u.name as user_name 
+        FROM marine_sightings ms 
+        JOIN users u ON ms.user_id = u.id 
+        WHERE ms.id = ?
+    ''', (sighting_id,))
+    sighting = cursor.fetchone()
+    conn.close()
+    return sighting
+
+
+
 if __name__ == "__main__":
     init_database()

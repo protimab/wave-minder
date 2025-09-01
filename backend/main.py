@@ -72,6 +72,52 @@ def read_me(current_user=Depends(auth.get_current_user)):
         created_at=str(current_user[6])
     )
 
+# CREATE MARINE SIGHTINGS
+@app.post("/sightings", response_model=schemas.MarineSightingResponse)
+def create_marine_sighting(
+    sighting: schemas.MarineSightingCreate,
+    current_user=Depends(auth.get_current_user)
+):
+    try:
+        sighting_id = database.create_marine_sighting(
+            user_id=current_user[0],  # user ID 
+            species_name=sighting.species_name,
+            species_type=sighting.species_type,
+            location_name=sighting.location_name,
+            latitude=sighting.latitude,
+            longitude=sighting.longitude,
+            date_spotted=sighting.date_spotted,
+            time_spotted=sighting.time_spotted,
+            group_size=sighting.group_size,
+            behavior=sighting.behavior,
+            notes=sighting.notes
+        )
+        
+        new_sighting = database.get_sighting_by_id(sighting_id)
+        if not new_sighting:
+            raise HTTPException(status_code=500, detail="Failed to create sighting")
+        
+        return schemas.MarineSightingResponse(
+            id=new_sighting[0],
+            species_name=new_sighting[2],
+            species_type=new_sighting[3],
+            location_name=new_sighting[4],
+            latitude=new_sighting[5],
+            longitude=new_sighting[6],
+            date_spotted=new_sighting[7],
+            time_spotted=new_sighting[8],
+            group_size=new_sighting[9],
+            behavior=new_sighting[10],
+            notes=new_sighting[12],
+            verified=bool(new_sighting[13]),
+            created_at=str(new_sighting[14]),
+            user_name=new_sighting[15]
+        )
+        
+    except Exception as e:
+        print(f"Error creating sighting: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create marine sighting")
+
 # TESTING
 def test_db():
     try:
