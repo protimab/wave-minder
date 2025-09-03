@@ -84,7 +84,7 @@ def init_database():
             participants INTEGER DEFAULT 1,
             impact_score REAL DEFAULT 1.0,
             waste_collected REAL DEFAULT 0,
-            area_covered_ REAL DEFAULT 0,
+            area_covered REAL DEFAULT 0,
             date_completed DATE NOT NULL,
             duration_hours REAL,
             photo_url TEXT,
@@ -195,7 +195,113 @@ def get_sighting_by_id(sighting_id: int):
     conn.close()
     return sighting
 
+def update_marine_sighting(sighting_id, species_name, species_type, location_name, 
+                          latitude, longitude, date_spotted, time_spotted=None, 
+                          group_size=1, behavior=None, notes=None):
+    """Update an existing marine sighting"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE marine_sightings 
+            SET species_name=?, species_type=?, location_name=?, latitude=?, 
+                longitude=?, date_spotted=?, time_spotted=?, group_size=?, 
+                behavior=?, notes=?
+            WHERE id=?
+        ''', (
+            species_name, species_type, location_name, latitude, longitude, 
+            date_spotted, time_spotted, group_size, behavior, notes, sighting_id
+        ))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            print(f"Updated marine sighting ID: {sighting_id}")
+        return success
+        
+    except Exception as e:
+        print(f"Error updating sighting: {e}")
+        conn.rollback()
+        conn.close()
+        return False
 
+def delete_marine_sighting(sighting_id):
+    """Delete a marine sighting"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM marine_sightings WHERE id=?', (sighting_id,))
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            print(f"Deleted marine sighting ID: {sighting_id}")
+        return success
+        
+    except Exception as e:
+        print(f"Error deleting sighting: {e}")
+        conn.rollback()
+        conn.close()
+        return False
 
+def get_sightings_by_location(location_name, limit=20):
+    """Get marine sightings by location"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ms.*, u.name as user_name 
+        FROM marine_sightings ms 
+        JOIN users u ON ms.user_id = u.id 
+        WHERE ms.location_name LIKE ? 
+        ORDER BY ms.date_spotted DESC 
+        LIMIT ?
+    ''', (f'%{location_name}%', limit))
+    sightings = cursor.fetchall()
+    conn.close()
+    return sightings
+
+def get_sightings_by_species(species_name, limit=20):
+    """Get marine sightings by species"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ms.*, u.name as user_name 
+        FROM marine_sightings ms 
+        JOIN users u ON ms.user_id = u.id 
+        WHERE ms.species_name LIKE ? 
+        ORDER BY ms.date_spotted DESC 
+        LIMIT ?
+    ''', (f'%{species_name}%', limit))
+    sightings = cursor.fetchall()
+    conn.close()
+    return sightings
+
+def verify_sighting(sighting_id, verified=True):
+    """mark sighting as verified or not"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            'UPDATE marine_sightings SET verified=? WHERE id=?', 
+            (verified, sighting_id)
+        )
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            status = "verified" if verified else "unverified"
+            print(f"Sighting ID {sighting_id} marked as {status}")
+        return success
+        
+    except Exception as e:
+        print(f"Error updating the verification status: {e}")
+        conn.rollback()
+        conn.close()
+        return False
+    
 if __name__ == "__main__":
     init_database()
