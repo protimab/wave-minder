@@ -97,7 +97,7 @@ def init_database():
     conn.close()
     print("Database initialized")
 
-# basic user functions
+# USER FUNCTIONS
 def create_user(email, name, password, location):
     """add user & return their ids"""
     conn = get_db_connection()
@@ -132,7 +132,7 @@ def get_user_by_id(user_id):
     conn.close()
     return user
 
-# basic marine sighting functions
+# MARINE SIGHTING FUNCTIONS
 def create_marine_sighting(user_id, species_name, species_type, 
                           location_name, latitude, longitude, date_spotted,
                           time_spotted=None, group_size=1, behavior=None, notes=None):
@@ -302,6 +302,162 @@ def verify_sighting(sighting_id, verified=True):
         conn.rollback()
         conn.close()
         return False
+
+# BEACH REPORT FUNCTIONS
+def create_beach_report(user_id, beach_name, latitude, longitude, water_quality, 
+                       pollution_level, report_date, water_temp=None, wildlife_activity=None,
+                       weather_conditions=None, notes=None, photo_url=None):
+    """Create a new beach report"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO beach_reports 
+            (user_id, beach_name, latitude, longitude, water_quality, pollution_level,
+             water_temp, wildlife_activity, weather_conditions, notes, photo_url, report_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id, beach_name, latitude, longitude, water_quality, pollution_level,
+            water_temp, wildlife_activity, weather_conditions, notes, photo_url, report_date
+        ))
+        
+        report_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        print(f"Created beach report: {beach_name} (ID: {report_id})")
+        return report_id
+        
+    except Exception as e:
+        print(f"Error creating beach report: {e}")
+        conn.rollback()
+        conn.close()
+        return None
+
+def get_beach_report_by_id(report_id: int):
+    """Get a beach report by its ID"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT br.*, u.name as user_name 
+        FROM beach_reports br 
+        JOIN users u ON br.user_id = u.id 
+        WHERE br.id = ?
+    ''', (report_id,))
+    report = cursor.fetchone()
+    conn.close()
+    return report
+
+def get_all_beach_reports(limit: int = 100, offset: int = 0):
+    """Get all beach reports within page"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT br.*, u.name as user_name 
+        FROM beach_reports br 
+        JOIN users u ON br.user_id = u.id 
+        ORDER BY br.report_date DESC, br.created_at DESC 
+        LIMIT ? OFFSET ?
+    ''', (limit, offset))
+    reports = cursor.fetchall()
+    conn.close()
+    return reports
+
+def get_user_beach_reports(user_id):
+    """Get all beach reports made by a specific user"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM beach_reports WHERE user_id = ? ORDER BY report_date DESC',
+        (user_id,)
+    )
+    reports = cursor.fetchall()
+    conn.close()
+    return reports
+
+def get_beach_reports_by_location(beach_name, limit=20):
+    """Get beach reports by beach name"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT br.*, u.name as user_name 
+        FROM beach_reports br 
+        JOIN users u ON br.user_id = u.id 
+        WHERE br.beach_name LIKE ? 
+        ORDER BY br.report_date DESC 
+        LIMIT ?
+    ''', (f'%{beach_name}%', limit))
+    reports = cursor.fetchall()
+    conn.close()
+    return reports
+
+def update_beach_report(report_id, beach_name, latitude, longitude, water_quality, 
+                       pollution_level, report_date, water_temp=None, wildlife_activity=None,
+                       weather_conditions=None, notes=None, photo_url=None):
+    """Update an existing beach report"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE beach_reports 
+            SET beach_name=?, latitude=?, longitude=?, water_quality=?, pollution_level=?,
+                water_temp=?, wildlife_activity=?, weather_conditions=?, notes=?, 
+                photo_url=?, report_date=?
+            WHERE id=?
+        ''', (
+            beach_name, latitude, longitude, water_quality, pollution_level,
+            water_temp, wildlife_activity, weather_conditions, notes, photo_url, 
+            report_date, report_id
+        ))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            print(f"Updated beach report ID: {report_id}")
+        return success
+        
+    except Exception as e:
+        print(f"Error updating beach report: {e}")
+        conn.rollback()
+        conn.close()
+        return False
+
+def delete_beach_report(report_id):
+    """Delete a beach report"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM beach_reports WHERE id=?', (report_id,))
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            print(f"Deleted beach report ID: {report_id}")
+        return success
+        
+    except Exception as e:
+        print(f"Error deleting beach report: {e}")
+        conn.rollback()
+        conn.close()
+        return False
+
+def get_beach_condition_trends(beach_name, days=30):
+    """Get beach condition trends over a period of time for analysis"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT report_date, water_quality, pollution_level, wildlife_activity, water_temp
+        FROM beach_reports 
+        WHERE beach_name LIKE ? 
+        AND report_date >= date('now', '-{} days')
+        ORDER BY report_date DESC
+    '''.format(days), (f'%{beach_name}%',))
+    
+    trends = cursor.fetchall()
+    conn.close()
+    return trends
     
 if __name__ == "__main__":
     init_database()

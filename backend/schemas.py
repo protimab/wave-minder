@@ -49,3 +49,34 @@ class MarineSightingResponse(BaseModel):
     verified: bool
     created_at: str
     user_name: Optional[str] = None
+
+# BEACH REPORT SCHEMAS
+class BeachReportCreate(BaseModel):
+    beach_name: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    water_quality: int  # 1-5 scale 
+    pollution_level: int  # 1-5 scale 
+    water_temp: Optional[float] = None  # Celsius
+    wildlife_activity: Optional[str] = None  # "high", "medium", "low", "none"
+    weather_conditions: Optional[str] = None
+    notes: Optional[str] = None
+    report_date: date
+    photo_url: Optional[str] = None
+
+class BeachReportResponse(BaseModel):
+    id: int
+    beach_name: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    water_quality: int
+    pollution_level: int
+    water_temp: Optional[float] = None
+    wildlife_activity: Optional[str] = None
+    weather_conditions: Optional[str] = None
+    notes: Optional[str] = None
+    report_date: date
+    photo_url: Optional[str] = None
+    created_at: str
+    user_name: Optional[str] = None
+    quality_score: Optional[float] = None 
