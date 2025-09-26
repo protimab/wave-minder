@@ -148,7 +148,7 @@ def create_marine_sighting(user_id, species_name, species_type,
         user_id, species_name, species_type, location_name, latitude, longitude, date_spotted,
         time_spotted, group_size, behavior, notes
     ))
-    sighting_id = cursor.lastrowid
+    sighting_id = cursor.lastrowid #store id of newly created row
     conn.commit()
     conn.close()
     print(f"created marine sighting: {species_name} (ID: {sighting_id})")
@@ -213,7 +213,7 @@ def update_marine_sighting(sighting_id, species_name, species_type, location_nam
             date_spotted, time_spotted, group_size, behavior, notes, sighting_id
         ))
         
-        success = cursor.rowcount > 0
+        success = cursor.rowcount > 0 #checks if any row was updated
         conn.commit()
         conn.close()
         
@@ -258,7 +258,7 @@ def get_sightings_by_location(location_name, limit=20):
         WHERE ms.location_name LIKE ? 
         ORDER BY ms.date_spotted DESC 
         LIMIT ?
-    ''', (f'%{location_name}%', limit))
+    ''', (f'%{location_name}%', limit)) #allow partial matching substring
     sightings = cursor.fetchall()
     conn.close()
     return sightings

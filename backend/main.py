@@ -78,7 +78,7 @@ def read_me(current_user=Depends(auth.get_current_user)):
 @app.post("/sightings", response_model=schemas.MarineSightingResponse)
 def create_marine_sighting(
     sighting: schemas.MarineSightingCreate,
-    current_user=Depends(auth.get_current_user)
+    current_user=Depends(auth.get_current_user) #ensure user logged in
 ):
     try:
         sighting_id = database.create_marine_sighting(
@@ -647,7 +647,236 @@ def delete_beach_report(
     except Exception as e:
         print(f"Error deleting beach report: {e}")
         raise HTTPException(status_code=500, detail="Failed to delete beach report")
+
+# GET BEACH REPORTS BY A LOCATION
+@app.get("/beach-reports/location/{beach_name}")
+def get_beach_reports_by_location(beach_name: str, limit: int = 20):
+    """Get beach reports by the loction name"""
+    try:
+        from beach_quality import calculate_beach_quality_score
+        
+        reports = database.get_beach_reports_by_location(beach_name, limit)
+        result = []
+        
+        for report in reports:
+            quality_data = calculate_beach_quality_score(
+                report[5],  # water_quality
+                report[6],  # pollution_level
+                report[8]   # wildlife_activity
+            )
+            
+            result.append(schemas.BeachReportResponse(
+                id=report[0],
+                beach_name=report[2],
+                latitude=report[3],
+                longitude=report[4],
+                water_quality=report[5],
+                pollution_level=report[6],
+                water_temp=report[7],
+                wildlife_activity=report[8],
+                weather_conditions=report[9],
+                notes=report[11],
+                photo_url=report[10],
+                report_date=report[12],
+                created_at=str(report[13]),
+                user_name=report[14],
+                quality_score=quality_data["score"]
+            ))
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error getting beach reports by location: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve beach reports by location")
+
+# BEACH CONDITION TRENDS ANALYSIS
+@app.get("/beach-reports/trends/{beach_name}")
+def get_beach_condition_trends(beach_name: str, days: int = 30):
+    """Get beach condition trends over time for the analysis"""
+    try:
+        from beach_quality import calculate_beach_quality_score, WATER_QUALITY_LABELS, POLLUTION_LABELS
+        
+        # check days
+        if days < 1 or days > 365:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 365")
+        
+        trends_data = database.get_beach_condition_trends(beach_name, days)
+        
+        if not trends_data:
+            return {
+                "beach_name": beach_name,
+                "analysis_period_days": days,
+                "total_reports": 0,
+                "message": "No reports found for this beach in this period"
+            }
+        
+        # calc trend stats
+        water_qualities = [row[1] for row in trends_data]  # water_quality values
+        pollution_levels = [row[2] for row in trends_data]  # pollution_level values
+        water_temps = [row[4] for row in trends_data if row[4] is not None]  # water_temp values
+        
+        # calc quality scores for each value
+        quality_scores = []
+        for row in trends_data:
+            quality_data = calculate_beach_quality_score(row[1], row[2], row[3])
+            quality_scores.append(quality_data["score"])
+        
+        # calc avg. + trends
+        avg_water_quality = sum(water_qualities) / len(water_qualities)
+        avg_pollution_level = sum(pollution_levels) / len(pollution_levels)
+        avg_quality_score = sum(quality_scores) / len(quality_scores)
+        avg_water_temp = sum(water_temps) / len(water_temps) if water_temps else None
+        
+        # determine overall trend (compare first half vs second half of data)
+        mid_point = len(quality_scores) // 2
+        if mid_point > 0:
+            first_half_avg = sum(quality_scores[:mid_point]) / mid_point
+            second_half_avg = sum(quality_scores[mid_point:]) / (len(quality_scores) - mid_point)
+            
+            if second_half_avg > first_half_avg + 0.2:
+                trend_direction = "improving"
+            elif second_half_avg < first_half_avg - 0.2:
+                trend_direction = "declining"
+            else:
+                trend_direction = "stable"
+        else:
+            trend_direction = "insufficient_data"
+        
+        # create trend analysis
+        analysis = {
+            "beach_name": beach_name,
+            "analysis_period_days": days,
+            "total_reports": len(trends_data),
+            "date_range": {
+                "from": trends_data[-1][0] if trends_data else None,  # oldest report
+                "to": trends_data[0][0] if trends_data else None      # newest report
+            },
+            "averages": {
+                "water_quality": round(avg_water_quality, 2),
+                "water_quality_label": WATER_QUALITY_LABELS.get(round(avg_water_quality)),
+                "pollution_level": round(avg_pollution_level, 2),
+                "pollution_label": POLLUTION_LABELS.get(round(avg_pollution_level)),
+                "overall_quality_score": round(avg_quality_score, 2),
+                "water_temperature_celsius": round(avg_water_temp, 1) if avg_water_temp else None
+            },
+            "trend": {
+                "direction": trend_direction,
+                "quality_change": round(second_half_avg - first_half_avg, 2) if mid_point > 0 else 0
+            },
+            "data_points": [
+                {
+                    "date": row[0],
+                    "water_quality": row[1],
+                    "pollution_level": row[2],
+                    "wildlife_activity": row[3],
+                    "water_temp": row[4],
+                    "quality_score": round(quality_scores[i], 2)
+                } for i, row in enumerate(trends_data)
+            ]
+        }
+        
+        return analysis
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error analyzing beach trends: {e}")
+        raise HTTPException(status_code=500, detail="Failed to analyze beach condition trends")
+
+# BEACH QUALITY SUMMARY (get the overall stats for a beach)
+@app.get("/beach-reports/summary/{beach_name}")
+def get_beach_quality_summary(beach_name: str):
+    """Get a summary of beach quality"""
+    try:
+        from beach_quality import calculate_beach_quality_score, WATER_QUALITY_LABELS, POLLUTION_LABELS
+        
+        # get recent reports (in last 90 days)
+        recent_reports = database.get_beach_condition_trends(beach_name, 90)
+        
+        if not recent_reports:
+            raise HTTPException(status_code=404, detail="No reports found for this beach")
+        
+        # calc summary statistics
+        total_reports = len(recent_reports)
+        water_qualities = [row[1] for row in recent_reports]
+        pollution_levels = [row[2] for row in recent_reports]
+        
+        # count wildlife activity levels
+        wildlife_counts = {"high": 0, "medium": 0, "low": 0, "none": 0, "unknown": 0}
+        for row in recent_reports:
+            activity = row[3].lower() if row[3] else "unknown"
+            if activity in wildlife_counts:
+                wildlife_counts[activity] += 1
+            else:
+                wildlife_counts["unknown"] += 1
+        
+        # calc overall quality scores
+        quality_scores = []
+        for row in recent_reports:
+            quality_data = calculate_beach_quality_score(row[1], row[2], row[3])
+            quality_scores.append(quality_data["score"])
+        
+        avg_quality_score = sum(quality_scores) / len(quality_scores)
+        
+        # determine overall grade
+        if avg_quality_score >= 4.5:
+            overall_grade = "A+"
+        elif avg_quality_score >= 4.0:
+            overall_grade = "A"
+        elif avg_quality_score >= 3.5:
+            overall_grade = "B+"
+        elif avg_quality_score >= 3.0:
+            overall_grade = "B"
+        elif avg_quality_score >= 2.5:
+            overall_grade = "C"
+        else:
+            overall_grade = "D"
+        
+        return {
+            "beach_name": beach_name,
+            "report_period": "Last 90 days",
+            "total_reports": total_reports,
+            "overall_quality_score": round(avg_quality_score, 2),
+            "overall_grade": overall_grade,
+            "average_water_quality": round(sum(water_qualities) / len(water_qualities), 1),
+            "average_pollution_level": round(sum(pollution_levels) / len(pollution_levels), 1),
+            "wildlife_activity_distribution": wildlife_counts,
+            "latest_report_date": recent_reports[0][0] if recent_reports else None,
+            "recommendations": generate_beach_recommendations(avg_quality_score, water_qualities, pollution_levels)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting beach summary: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get beach quality summary")
+
+# helper function for recs
+def generate_beach_recommendations(avg_score: float, water_qualities: list, pollution_levels: list):
+    """Generate recs based on beach conditions"""
+    recommendations = []
     
+    avg_water_quality = sum(water_qualities) / len(water_qualities)
+    avg_pollution = sum(pollution_levels) / len(pollution_levels)
+    
+    if avg_score >= 4.0:
+        recommendations.append("Wonderful conditions for swimming and water activities!")
+    elif avg_score >= 3.0:
+        recommendations.append("Good conditions for most beach activities.")
+    else:
+        recommendations.append("Exercise caution - consider water quality before swimming.")
+    
+    if avg_water_quality < 3.0:
+        recommendations.append("Water quality concerns - check recent reports before swimming.")
+    
+    if avg_pollution < 3.0:
+        recommendations.append("High pollution levels reported - consider beach cleanup participation!")
+    
+    if avg_pollution >= 4.0 and avg_water_quality >= 4.0:
+        recommendations.append(" Great conditions for marine wildlife observation.")
+    
+    return recommendations
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000)
