@@ -80,3 +80,46 @@ class BeachReportResponse(BaseModel):
     created_at: str
     user_name: Optional[str] = None
     quality_score: Optional[float] = None 
+
+#CONSERVATION ACTION SCHEMAS
+class ConservationActionCreate(BaseModel):
+    action_type: str  # "beach_cleanup", "citizen_science", "education", "restoration", "monitoring"
+    title: str
+    description: Optional[str] = None
+    location_name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    participants: int = 1
+    waste_collected: Optional[float] = 0  # in kg
+    area_covered: Optional[float] = 0  # in square meters
+    date_completed: date
+    duration_hours: Optional[float] = None
+    photo_url: Optional[str] = None
+
+class ConservationActionResponse(BaseModel):
+    id: int
+    action_type: str
+    title: str
+    description: Optional[str] = None
+    location_name: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    participants: int
+    impact_score: float
+    waste_collected: float
+    area_covered: float
+    date_completed: date
+    duration_hours: Optional[float] = None
+    photo_url: Optional[str] = None
+    created_at: str
+    user_name: Optional[str] = None
+
+class CommunityStatsResponse(BaseModel):
+    total_actions: int
+    total_participants: int
+    total_waste_collected_kg: float
+    total_area_covered_sqm: float
+    total_impact_score: float
+    actions_by_type: dict
+    top_contributors: list
+    recent_actions: list

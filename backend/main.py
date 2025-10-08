@@ -1,9 +1,10 @@
-from typing import List
-from fastapi import FastAPI,HTTPException, status, Depends
+from typing import List, Optional
+from fastapi import FastAPI,HTTPException, status, Depends, UploadFile, File
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import database
 import auth
+import os
 import schemas
 import backend.beach_quality as beach_quality
 
@@ -876,6 +877,665 @@ def generate_beach_recommendations(avg_score: float, water_qualities: list, poll
         recommendations.append(" Great conditions for marine wildlife observation.")
     
     return recommendations
+
+
+# CREATE CONSERVATION ACTION
+@app.post("/conservation-actions", response_model=schemas.ConservationActionResponse)
+def create_conservation_action(
+    action: schemas.ConservationActionCreate,
+    current_user=Depends(auth.get_current_user)
+):
+    """Create a new conservation action"""
+    try:
+        from conservation_impact import (
+            validate_conservation_action, 
+            calculate_impact_score
+        )
+
+        errors = validate_conservation_action(
+            action.action_type,
+            action.participants,
+            action.waste_collected,
+            action.area_covered,
+            action.duration_hours
+        )
+        
+        if errors:
+            raise HTTPException(status_code=400, detail=f"Validation errors: {', '.join(errors)}")
+        
+        # calculate impact score
+        impact_data = calculate_impact_score(
+            action.action_type,
+            action.participants,
+            action.waste_collected,
+            action.area_covered,
+            action.duration_hours
+        )
+        
+        # create action
+        action_id = database.create_conservation_action(
+            user_id=current_user[0],
+            action_type=action.action_type,
+            title=action.title,
+            description=action.description,
+            location_name=action.location_name,
+            latitude=action.latitude,
+            longitude=action.longitude,
+            participants=action.participants,
+            impact_score=impact_data["impact_score"],
+            waste_collected=action.waste_collected,
+            area_covered=action.area_covered,
+            date_completed=action.date_completed,
+            duration_hours=action.duration_hours,
+            photo_url=action.photo_url
+        )
+        
+        if not action_id:
+            raise HTTPException(status_code=500, detail="Failed to create conservation action")
+        
+        # get created action
+        new_action = database.get_conservation_action_by_id(action_id)
+        if not new_action:
+            raise HTTPException(status_code=500, detail="Failed to retrieve created action")
+        
+        return schemas.ConservationActionResponse(
+            id=new_action[0],
+            action_type=new_action[2],
+            title=new_action[3],
+            description=new_action[4],
+            location_name=new_action[5],
+            latitude=new_action[6],
+            longitude=new_action[7],
+            participants=new_action[8],
+            impact_score=new_action[9],
+            waste_collected=new_action[10],
+            area_covered=new_action[11],
+            date_completed=new_action[12],
+            duration_hours=new_action[13],
+            photo_url=new_action[14],
+            created_at=str(new_action[15]),
+            user_name=new_action[16]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error creating conservation action: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create conservation action")
+
+# GET ALL CONSERVATION ACTIONS
+@app.get("/conservation-actions", response_model=List[schemas.ConservationActionResponse])
+def get_all_conservation_actions(limit: int = 50, offset: int = 0):
+    """get all conservation actions with page"""
+    try:
+        actions = database.get_all_conservation_actions(limit=limit, offset=offset)
+        result = []
+        
+        for action in actions:
+            result.append(schemas.ConservationActionResponse(
+                id=action[0],
+                action_type=action[2],
+                title=action[3],
+                description=action[4],
+                location_name=action[5],
+                latitude=action[6],
+                longitude=action[7],
+                participants=action[8],
+                impact_score=action[9],
+                waste_collected=action[10],
+                area_covered=action[11],
+                date_completed=action[12],
+                duration_hours=action[13],
+                photo_url=action[14],
+                created_at=str(action[15]),
+                user_name=action[16]
+            ))
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error getting conservation actions: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve conservation actions")
+
+# GET USER'S CONSERVATION ACTIONS
+@app.get("/my-conservation-actions", response_model=List[schemas.ConservationActionResponse])
+def get_my_conservation_actions(current_user=Depends(auth.get_current_user)):
+    """get current user's conservation actions"""
+    try:
+        actions = database.get_user_conservation_actions(current_user[0])
+        result = []
+        
+        for action in actions:
+            result.append(schemas.ConservationActionResponse(
+                id=action[0],
+                action_type=action[2],
+                title=action[3],
+                description=action[4],
+                location_name=action[5],
+                latitude=action[6],
+                longitude=action[7],
+                participants=action[8],
+                impact_score=action[9],
+                waste_collected=action[10],
+                area_covered=action[11],
+                date_completed=action[12],
+                duration_hours=action[13],
+                photo_url=action[14],
+                created_at=str(action[15]),
+                user_name=current_user[2]
+            ))
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error getting user conservation actions: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve your conservation actions")
+
+# GET ONE CONSERVATION ACTION
+@app.get("/conservation-actions/{action_id}", response_model=schemas.ConservationActionResponse)
+def get_conservation_action(action_id: int):
+    """get a specific conservation action by ID"""
+    try:
+        action = database.get_conservation_action_by_id(action_id)
+        if not action:
+            raise HTTPException(status_code=404, detail="Conservation action not found")
+        
+        return schemas.ConservationActionResponse(
+            id=action[0],
+            action_type=action[2],
+            title=action[3],
+            description=action[4],
+            location_name=action[5],
+            latitude=action[6],
+            longitude=action[7],
+            participants=action[8],
+            impact_score=action[9],
+            waste_collected=action[10],
+            area_covered=action[11],
+            date_completed=action[12],
+            duration_hours=action[13],
+            photo_url=action[14],
+            created_at=str(action[15]),
+            user_name=action[16]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting conservation action: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve conservation action")
+
+# UPDATE CONSERVATION ACTION (only allowed by owner)
+@app.put("/conservation-actions/{action_id}", response_model=schemas.ConservationActionResponse)
+def update_conservation_action(
+    action_id: int,
+    action_update: schemas.ConservationActionCreate,
+    current_user=Depends(auth.get_current_user)
+):
+    """update conservation action (only by the user who created it)"""
+    try:
+        from conservation_impact import (
+            validate_conservation_action,
+            calculate_impact_score
+        )
+        
+        # action exists and belongs to current user
+        existing_action = database.get_conservation_action_by_id(action_id)
+        if not existing_action:
+            raise HTTPException(status_code=404, detail="Conservation action not found")
+        
+        if existing_action[1] != current_user[0]:  # user_id check
+            raise HTTPException(status_code=403, detail="Not authorized to update this action")
+        
+        errors = validate_conservation_action(
+            action_update.action_type,
+            action_update.participants,
+            action_update.waste_collected,
+            action_update.area_covered,
+            action_update.duration_hours
+        )
+        
+        if errors:
+            raise HTTPException(status_code=400, detail=f"Validation errors: {', '.join(errors)}")
+        
+        # recalculate impact score
+        impact_data = calculate_impact_score(
+            action_update.action_type,
+            action_update.participants,
+            action_update.waste_collected,
+            action_update.area_covered,
+            action_update.duration_hours
+        )
+        
+        # update action
+        success = database.update_conservation_action(
+            action_id=action_id,
+            action_type=action_update.action_type,
+            title=action_update.title,
+            description=action_update.description,
+            location_name=action_update.location_name,
+            latitude=action_update.latitude,
+            longitude=action_update.longitude,
+            participants=action_update.participants,
+            impact_score=impact_data["impact_score"],
+            waste_collected=action_update.waste_collected,
+            area_covered=action_update.area_covered,
+            date_completed=action_update.date_completed,
+            duration_hours=action_update.duration_hours,
+            photo_url=action_update.photo_url
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to update conservation action")
+        
+        # return updated action
+        updated_action = database.get_conservation_action_by_id(action_id)
+        
+        return schemas.ConservationActionResponse(
+            id=updated_action[0],
+            action_type=updated_action[2],
+            title=updated_action[3],
+            description=updated_action[4],
+            location_name=updated_action[5],
+            latitude=updated_action[6],
+            longitude=updated_action[7],
+            participants=updated_action[8],
+            impact_score=updated_action[9],
+            waste_collected=updated_action[10],
+            area_covered=updated_action[11],
+            date_completed=updated_action[12],
+            duration_hours=updated_action[13],
+            photo_url=updated_action[14],
+            created_at=str(updated_action[15]),
+            user_name=updated_action[16]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating conservation action: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update conservation action")
+
+# dELETE CONSERVATION ACTION (only by the owner)
+@app.delete("/conservation-actions/{action_id}")
+def delete_conservation_action(
+    action_id: int,
+    current_user=Depends(auth.get_current_user)
+):
+    """delete a conservation action (only by the user who made)"""
+    try:
+        # action exists and belongs to current user
+        existing_action = database.get_conservation_action_by_id(action_id)
+        if not existing_action:
+            raise HTTPException(status_code=404, detail="Conservation action not found")
+        
+        if existing_action[1] != current_user[0]:  # user_id check
+            raise HTTPException(status_code=403, detail="Not authorized to delete this action")
+        
+        # delete
+        success = database.delete_conservation_action(action_id)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to delete conservation action")
+        
+        return {"message": "Conservation action deleted successfully!"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error deleting conservation action: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete conservation action")
+
+# GET ACTIONS BY TYPE
+@app.get("/conservation-actions/type/{action_type}")
+def get_conservation_actions_by_type(action_type: str, limit: int = 50):
+    """get conservation actions by type"""
+    try:
+        from conservation_impact import VALID_ACTION_TYPES
+        
+        if action_type not in VALID_ACTION_TYPES:
+            valid_types = ", ".join(VALID_ACTION_TYPES.keys())
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid action type. Must be one of: {valid_types}"
+            )
+        
+        actions = database.get_conservation_actions_by_type(action_type, limit)
+        result = []
+        
+        for action in actions:
+            result.append(schemas.ConservationActionResponse(
+                id=action[0],
+                action_type=action[2],
+                title=action[3],
+                description=action[4],
+                location_name=action[5],
+                latitude=action[6],
+                longitude=action[7],
+                participants=action[8],
+                impact_score=action[9],
+                waste_collected=action[10],
+                area_covered=action[11],
+                date_completed=action[12],
+                duration_hours=action[13],
+                photo_url=action[14],
+                created_at=str(action[15]),
+                user_name=action[16]
+            ))
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting conservation actions by type: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve conservation actions by type")
+
+# GET ACTIONS BY LOCATION
+@app.get("/conservation-actions/location/{location_name}")
+def get_conservation_actions_by_location(location_name: str, limit: int = 50):
+    """get conservation actions by location"""
+    try:
+        actions = database.get_conservation_actions_by_location(location_name, limit)
+        result = []
+        
+        for action in actions:
+            result.append(schemas.ConservationActionResponse(
+                id=action[0],
+                action_type=action[2],
+                title=action[3],
+                description=action[4],
+                location_name=action[5],
+                latitude=action[6],
+                longitude=action[7],
+                participants=action[8],
+                impact_score=action[9],
+                waste_collected=action[10],
+                area_covered=action[11],
+                date_completed=action[12],
+                duration_hours=action[13],
+                photo_url=action[14],
+                created_at=str(action[15]),
+                user_name=action[16]
+            ))
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error getting conservation actions by location: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve conservation actions by location")
+
+# COMMUNITY CONSERVATION STATISTICS
+@app.get("/conservation-stats/community")
+def get_community_stats(days: int = 30):
+    """get community conservation stats"""
+    try:
+        from conservation_impact import calculate_community_impact, VALID_ACTION_TYPES
+        
+        if days < 1 or days > 365:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 365")
+        
+        # get community data
+        community_data = database.get_community_conservation_stats(days)
+        
+        actions = community_data["actions"]
+        actions_by_type = community_data["actions_by_type"]
+        top_contributors = community_data["top_contributors"]
+        
+        # calculate overall impact
+        impact_summary = calculate_community_impact(actions)
+        
+        # format actions by type
+        type_breakdown = {}
+        for type_row in actions_by_type:
+            action_type = type_row[0]
+            type_info = VALID_ACTION_TYPES.get(action_type, {})
+            type_breakdown[action_type] = {
+                "name": type_info.get("name", action_type),
+                "count": type_row[1],
+                "total_participants": type_row[2],
+                "total_waste_kg": round(type_row[3], 2) if type_row[3] else 0,
+                "total_impact": round(type_row[4], 2) if type_row[4] else 0
+            }
+        
+        # format top contributors
+        contributors_list = []
+        for contrib in top_contributors[:10]:  # top 10
+            contributors_list.append({
+                "user_name": contrib[0],
+                "user_id": contrib[1],
+                "action_count": contrib[2],
+                "total_impact": round(contrib[3], 2),
+                "total_participants_organized": contrib[4]
+            })
+        
+        # format recent actions
+        recent_actions = []
+        for action in actions[:10]:  # most recent 10
+            recent_actions.append({
+                "id": action[0],
+                "title": action[3],
+                "action_type": action[2],
+                "location": action[5],
+                "participants": action[8],
+                "impact_score": action[9],
+                "date_completed": str(action[12]),
+                "user_name": action[16]
+            })
+        
+        return schemas.CommunityStatsResponse(
+            total_actions=impact_summary["total_actions"],
+            total_participants=impact_summary["total_participants"],
+            total_waste_collected_kg=impact_summary["total_waste_kg"],
+            total_area_covered_sqm=impact_summary["total_area_sqm"],
+            total_impact_score=impact_summary["total_impact_score"],
+            actions_by_type=type_breakdown,
+            top_contributors=contributors_list,
+            recent_actions=recent_actions
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting community stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve community stats")
+
+# USER IMPACT STATISTICS
+@app.get("/conservation-stats/user/{user_id}")
+def get_user_impact_stats(user_id: int):
+    """get impact statistics for a specific user"""
+    try:
+        from conservation_impact import VALID_ACTION_TYPES
+        
+        # user exists
+        user = database.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # get user stats
+        user_data = database.get_user_impact_stats(user_id)
+        stats = user_data["stats"]
+        actions_by_type = user_data["actions_by_type"]
+        
+        # format actions by type
+        type_breakdown = {}
+        for type_row in actions_by_type:
+            action_type = type_row[0]
+            type_info = VALID_ACTION_TYPES.get(action_type, {})
+            type_breakdown[action_type] = {
+                "name": type_info.get("name", action_type),
+                "count": type_row[1]
+            }
+        
+        return {
+            "user_id": user_id,
+            "user_name": user[2],  
+            "total_actions": stats[0] if stats[0] else 0,
+            "total_participants_organized": stats[1] if stats[1] else 0,
+            "total_waste_collected_kg": round(stats[2], 2) if stats[2] else 0,
+            "total_area_covered_sqm": round(stats[3], 2) if stats[3] else 0,
+            "total_impact_score": round(stats[4], 2) if stats[4] else 0,
+            "average_impact_score": round(stats[5], 2) if stats[5] else 0,
+            "actions_by_type": type_breakdown
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting user impact stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve user stats")
+
+# USER IMPACT STATISTICS
+@app.get("/conservation-stats/me")
+def get_my_impact_stats(current_user=Depends(auth.get_current_user)):
+    """get impact stats for the current user"""
+    try:
+        from conservation_impact import VALID_ACTION_TYPES
+        
+        user_id = current_user[0]
+        user_data = database.get_user_impact_stats(user_id)
+        stats = user_data["stats"]
+        actions_by_type = user_data["actions_by_type"]
+        
+        # format actions by type
+        type_breakdown = {}
+        for type_row in actions_by_type:
+            action_type = type_row[0]
+            type_info = VALID_ACTION_TYPES.get(action_type, {})
+            type_breakdown[action_type] = {
+                "name": type_info.get("name", action_type),
+                "count": type_row[1]
+            }
+        
+        # determine impact level
+        total_impact = stats[4] if stats[4] else 0
+        if total_impact >= 500:
+            impact_level = "Conservation Champion"
+        elif total_impact >= 250:
+            impact_level = "Active Contributor"
+        elif total_impact >= 100:
+            impact_level = "Regular Participant"
+        elif total_impact >= 25:
+            impact_level = "Getting Started"
+        else:
+            impact_level = "Newcomer"
+        
+        return {
+            "user_id": user_id,
+            "user_name": current_user[2],
+            "impact_level": impact_level,
+            "total_actions": stats[0] if stats[0] else 0,
+            "total_participants_organized": stats[1] if stats[1] else 0,
+            "total_waste_collected_kg": round(stats[2], 2) if stats[2] else 0,
+            "total_area_covered_sqm": round(stats[3], 2) if stats[3] else 0,
+            "total_impact_score": round(total_impact, 2),
+            "average_impact_score": round(stats[5], 2) if stats[5] else 0,
+            "actions_by_type": type_breakdown,
+            "achievements": generate_user_achievements(stats)
+        }
+        
+    except Exception as e:
+        print(f"Error getting my impact stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve your stats")
+
+# iMPACT LEADERBOARD
+@app.get("/conservation-stats/leaderboard")
+def get_impact_leaderboard(days: int = 30, limit: int = 20):
+    """get leaderboard of top contributors"""
+    try:
+        if days < 1 or days > 365:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 365")
+        
+        if limit < 1 or limit > 100:
+            raise HTTPException(status_code=400, detail="Limit must be between 1 and 100")
+        
+        community_data = database.get_community_conservation_stats(days)
+        top_contributors = community_data["top_contributors"]
+        
+        leaderboard = []
+        for rank, contrib in enumerate(top_contributors[:limit], 1):
+            leaderboard.append({
+                "rank": rank,
+                "user_name": contrib[0],
+                "user_id": contrib[1],
+                "action_count": contrib[2],
+                "total_impact_score": round(contrib[3], 2),
+                "total_participants_organized": contrib[4]
+            })
+        
+        return {
+            "leaderboard_period_days": days,
+            "total_leaders": len(leaderboard),
+            "leaders": leaderboard
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting leaderboard: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve leaderboard")
+
+# aCTION TYPES INFO
+@app.get("/conservation-actions/info/types")
+def get_action_types_info():
+    """get info about all available action types"""
+    from conservation_impact import VALID_ACTION_TYPES
+    
+    types_info = []
+    for action_type, info in VALID_ACTION_TYPES.items():
+        types_info.append({
+            "action_type": action_type,
+            "name": info["name"],
+            "description": info["description"],
+            "impact_multiplier": info["base_multiplier"]
+        })
+    
+    return {
+        "action_types": types_info,
+        "total_types": len(types_info)
+    }
+
+# helper function for achievements
+def generate_user_achievements(stats):
+    """generate achievement badges based on user stats"""
+    achievements = []
+    
+    total_actions = stats[0] if stats[0] else 0
+    total_waste = stats[2] if stats[2] else 0
+    total_impact = stats[4] if stats[4] else 0
+    
+    # action count achievements
+    if total_actions >= 100:
+        achievements.append({"badge": "Century Club", "description": "100+ conservation actions"})
+    elif total_actions >= 50:
+        achievements.append({"badge": "Half Century", "description": "50+ conservation actions"})
+    elif total_actions >= 25:
+        achievements.append({"badge": "Quarter Century", "description": "25+ conservation actions"})
+    elif total_actions >= 10:
+        achievements.append({"badge": "Active Member", "description": "10+ conservation actions"})
+    elif total_actions >= 1:
+        achievements.append({"badge": "Getting Started", "description": "First conservation action"})
+    
+    # waste collection achievements
+    if total_waste >= 1000:
+        achievements.append({"badge": "Cleanup Champion", "description": "1000+ kg waste collected"})
+    elif total_waste >= 500:
+        achievements.append({"badge": "Cleanup Hero", "description": "500+ kg waste collected"})
+    elif total_waste >= 100:
+        achievements.append({"badge": "Beach Cleaner", "description": "100+ kg waste collected"})
+    elif total_waste >= 10:
+        achievements.append({"badge": "Cleanup Starter", "description": "10+ kg waste collected"})
+    
+    # impact score achievements
+    if total_impact >= 1000:
+        achievements.append({"badge": "Impact Legend", "description": "1000+ impact points"})
+    elif total_impact >= 500:
+        achievements.append({"badge": "Conservation Champion", "description": "500+ impact points"})
+    elif total_impact >= 250:
+        achievements.append({"badge": "Active Contributor", "description": "250+ impact points"})
+    elif total_impact >= 100:
+        achievements.append({"badge": "Regular Participant", "description": "100+ impact points"})
+    
+    return achievements if achievements else [{"badge": "Newcomer", "description": "Welcome to WaveMinder!"}]
 
 if __name__ == "__main__":
     import uvicorn

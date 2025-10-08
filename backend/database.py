@@ -458,6 +458,254 @@ def get_beach_condition_trends(beach_name, days=30):
     trends = cursor.fetchall()
     conn.close()
     return trends
+
+# CONSERVATION ACTION FUNCTIONS
+def create_conservation_action(user_id, action_type, title, description, location_name,
+                              latitude, longitude, participants, impact_score,
+                              waste_collected, area_covered, date_completed,
+                              duration_hours=None, photo_url=None):
+    """create a new conservation action"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO conservation_actions 
+            (user_id, action_type, title, description, location_name, latitude, longitude,
+             participants, impact_score, waste_collected, area_covered_, date_completed,
+             duration_hours, photo_url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id, action_type, title, description, location_name, latitude, longitude,
+            participants, impact_score, waste_collected, area_covered, date_completed,
+            duration_hours, photo_url
+        ))
+        
+        action_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        print(f"Created conservation action: {title} (ID: {action_id})")
+        return action_id
+        
+    except Exception as e:
+        print(f"Error creating conservation action: {e}")
+        conn.rollback()
+        conn.close()
+        return None
+
+def get_conservation_action_by_id(action_id: int):
+    """get a conservation action by ID"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ca.*, u.name as user_name 
+        FROM conservation_actions ca 
+        JOIN users u ON ca.user_id = u.id 
+        WHERE ca.id = ?
+    ''', (action_id,))
+    action = cursor.fetchone()
+    conn.close()
+    return action
+
+def get_all_conservation_actions(limit: int = 100, offset: int = 0):
+    """Get all conservation actions within page"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ca.*, u.name as user_name 
+        FROM conservation_actions ca 
+        JOIN users u ON ca.user_id = u.id 
+        ORDER BY ca.date_completed DESC, ca.created_at DESC 
+        LIMIT ? OFFSET ?
+    ''', (limit, offset))
+    actions = cursor.fetchall()
+    conn.close()
+    return actions
+
+def get_user_conservation_actions(user_id):
+    """get all conservation actions by a specific user"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        'SELECT * FROM conservation_actions WHERE user_id = ? ORDER BY date_completed DESC',
+        (user_id,)
+    )
+    actions = cursor.fetchall()
+    conn.close()
+    return actions
+
+def get_conservation_actions_by_type(action_type, limit=50):
+    """get conservation actions by type"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ca.*, u.name as user_name 
+        FROM conservation_actions ca 
+        JOIN users u ON ca.user_id = u.id 
+        WHERE ca.action_type = ? 
+        ORDER BY ca.date_completed DESC 
+        LIMIT ?
+    ''', (action_type, limit))
+    actions = cursor.fetchall()
+    conn.close()
+    return actions
+
+def get_conservation_actions_by_location(location_name, limit=50):
+    """get conservation actions by location"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT ca.*, u.name as user_name 
+        FROM conservation_actions ca 
+        JOIN users u ON ca.user_id = u.id 
+        WHERE ca.location_name LIKE ? 
+        ORDER BY ca.date_completed DESC 
+        LIMIT ?
+    ''', (f'%{location_name}%', limit))
+    actions = cursor.fetchall()
+    conn.close()
+    return actions
+
+def update_conservation_action(action_id, action_type, title, description, location_name,
+                              latitude, longitude, participants, impact_score,
+                              waste_collected, area_covered, date_completed,
+                              duration_hours=None, photo_url=None):
+    """update existing conservation action"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE conservation_actions 
+            SET action_type=?, title=?, description=?, location_name=?, latitude=?, longitude=?,
+                participants=?, impact_score=?, waste_collected=?, area_covered_=?, 
+                date_completed=?, duration_hours=?, photo_url=?
+            WHERE id=?
+        ''', (
+            action_type, title, description, location_name, latitude, longitude,
+            participants, impact_score, waste_collected, area_covered, date_completed,
+            duration_hours, photo_url, action_id
+        ))
+        
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            print(f"Updated conservation action ID: {action_id}")
+        return success
+        
+    except Exception as e:
+        print(f"Error updating conservation action: {e}")
+        conn.rollback()
+        conn.close()
+        return False
+
+def delete_conservation_action(action_id):
+    """delete a conservation action"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('DELETE FROM conservation_actions WHERE id=?', (action_id,))
+        success = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        if success:
+            print(f"Deleted conservation action ID: {action_id}")
+        return success
+        
+    except Exception as e:
+        print(f"Error deleting conservation action: {e}")
+        conn.rollback()
+        conn.close()
+        return False
+
+def get_community_conservation_stats(days: int = 30):
+    """get community conservation stats"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    # get all actions in the time frame
+    cursor.execute('''
+        SELECT ca.*, u.name as user_name 
+        FROM conservation_actions ca 
+        JOIN users u ON ca.user_id = u.id 
+        WHERE ca.date_completed >= date('now', '-{} days')
+        ORDER BY ca.date_completed DESC
+    '''.format(days))
+    
+    actions = cursor.fetchall()
+    
+    # get actions by type
+    cursor.execute('''
+        SELECT action_type, COUNT(*) as count, 
+               SUM(participants) as total_participants,
+               SUM(waste_collected) as total_waste,
+               SUM(impact_score) as total_impact
+        FROM conservation_actions 
+        WHERE date_completed >= date('now', '-{} days')
+        GROUP BY action_type
+    '''.format(days))
+    
+    actions_by_type = cursor.fetchall()
+    
+    # get top contributors
+    cursor.execute('''
+        SELECT u.name, u.id, COUNT(*) as action_count,
+               SUM(ca.impact_score) as total_impact,
+               SUM(ca.participants) as total_participants
+        FROM conservation_actions ca
+        JOIN users u ON ca.user_id = u.id
+        WHERE ca.date_completed >= date('now', '-{} days')
+        GROUP BY u.id
+        ORDER BY total_impact DESC
+        LIMIT 10
+    '''.format(days))
+    
+    top_contributors = cursor.fetchall()
+    
+    conn.close()
+    
+    return {
+        "actions": actions,
+        "actions_by_type": actions_by_type,
+        "top_contributors": top_contributors
+    }
+
+def get_user_impact_stats(user_id):
+    """get impact statistics for a specific user"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT 
+            COUNT(*) as total_actions,
+            SUM(participants) as total_participants,
+            SUM(waste_collected) as total_waste,
+            SUM(area_covered_) as total_area,
+            SUM(impact_score) as total_impact,
+            AVG(impact_score) as avg_impact
+        FROM conservation_actions 
+        WHERE user_id = ?
+    ''', (user_id,))
+    
+    stats = cursor.fetchone()
+    
+    # get actions by type for this user
+    cursor.execute('''
+        SELECT action_type, COUNT(*) as count
+        FROM conservation_actions 
+        WHERE user_id = ?
+        GROUP BY action_type
+    ''', (user_id,))
+    
+    actions_by_type = cursor.fetchall()
+    
+    conn.close()
+    
+    return {
+        "stats": stats,
+        "actions_by_type": actions_by_type
+    }
     
 if __name__ == "__main__":
     init_database()
