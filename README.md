@@ -1,5 +1,5 @@
 # WaveMinder
-Welcome to my marine conservation platform :)
+Welcome to my marine conservation platform :
 
 📍 **Core Features**:  
 
@@ -34,7 +34,7 @@ The impact scoring system quantifies the environmental and social impact of cons
 
 Participant Score: 1 point per participant
 
-**Waste Collection Bonus: 2 points per kg of waste collected
+Waste Collection Bonus: 2 points per kg of waste collected
 
 Area Coverage Bonus: 0.01 point per square meter covered
 

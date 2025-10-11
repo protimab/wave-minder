@@ -7,6 +7,7 @@ import auth
 import os
 import schemas
 import backend.beach_quality as beach_quality
+import ocean_data
 
 # FASTAPI
 async def lifespan(app: FastAPI):
@@ -1536,6 +1537,218 @@ def generate_user_achievements(stats):
         achievements.append({"badge": "Regular Participant", "description": "100+ impact points"})
     
     return achievements if achievements else [{"badge": "Newcomer", "description": "Welcome to WaveMinder!"}]
+
+#Get tide predictions for a specific NOAA station
+@app.get("/ocean-data/tides/{station_id}")
+def get_tide_data_endpoint(station_id: str, days: int = 1):
+    try:
+        if days < 1 or days > 30:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 30")
+        
+        tide_data = ocean_data.get_tide_data(station_id, days=days)
+        
+        if "error" in tide_data:
+            raise HTTPException(status_code=404, detail=tide_data["error"])
+        
+        return tide_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting tide data: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve tide data")
+
+# GET TIDE DATA BY LOCATION NAME
+@app.get("/ocean-data/tides/location/{location_name}")
+def get_tide_data_by_location(location_name: str, days: int = 1):
+    try:
+        if days < 1 or days > 30:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 30")
+        
+        # Find nearest station
+        station_id = ocean_data.find_nearest_tide_station(location_name)
+        if not station_id:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No tide station found for '{location_name}'. Try using coordinates instead."
+            )
+        
+        tide_data = ocean_data.get_tide_data(station_id, days=days)
+        
+        if "error" in tide_data:
+            raise HTTPException(status_code=404, detail=tide_data["error"])
+        
+        return {
+            "location_name": location_name,
+            "station_id": station_id,
+            **tide_data
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting tide data by location: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve tide data")
+
+# GET MARINE WEATHER
+@app.get("/ocean-data/marine-weather")
+def get_marine_weather_endpoint(latitude: float, longitude: float, days: int = 3):
+    try:
+        if not ocean_data.validate_coordinates(latitude, longitude):
+            raise HTTPException(status_code=400, detail="Invalid coordinates")
+        
+        if days < 1 or days > 7:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 7")
+        
+        weather_data = ocean_data.get_marine_weather(latitude, longitude, days=days)
+        
+        if "error" in weather_data:
+            raise HTTPException(status_code=503, detail=f"Weather service error: {weather_data['error']}")
+        
+        return weather_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting marine weather: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve marine weather")
+
+# GET WATER TEMP
+@app.get("/ocean-data/water-temperature")
+def get_water_temperature_endpoint(latitude: float, longitude: float, days: int = 7):
+    try:
+        if not ocean_data.validate_coordinates(latitude, longitude):
+            raise HTTPException(status_code=400, detail="Invalid coordinates")
+        
+        if days < 1 or days > 7:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 7")
+        
+        temp_data = ocean_data.get_water_temperature(latitude, longitude, days=days)
+        
+        if "error" in temp_data:
+            raise HTTPException(status_code=503, detail=f"Temperature service error: {temp_data['error']}")
+        
+        return temp_data
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting water temperature: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve water temperature")
+
+# GET COMPREHENSIVE OCEAN CONDITIONS
+@app.get("/ocean-data/conditions")
+def get_ocean_conditions(location_name: str, latitude: float, longitude: float, days: int = 3):
+    try:
+        if not ocean_data.validate_coordinates(latitude, longitude):
+            raise HTTPException(status_code=400, detail="Invalid coordinates")
+        
+        if days < 1 or days > 7:
+            raise HTTPException(status_code=400, detail="Days must be between 1 and 7")
+        
+        conditions = ocean_data.get_ocean_conditions_for_location(
+            location_name, latitude, longitude, days
+        )
+        
+        if "error" in conditions:
+            raise HTTPException(status_code=503, detail=conditions["error"])
+        
+        return conditions
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting ocean conditions: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve ocean conditions")
+
+# GET CONDITIONS FOR BEACH REPORT LOCATION
+@app.get("/ocean-data/conditions/beach/{beach_name}")
+def get_conditions_for_beach(beach_name: str, days: int = 3):
+    try:
+        # find recent beach reports for this location from db
+        beach_reports = database.get_beach_reports_by_location(beach_name, limit=1)
+        
+        if not beach_reports:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"No beach reports found for '{beach_name}'. Please provide the coordinates."
+            )
+        
+        # get coordinates from recent report
+        report = beach_reports[0]
+        latitude = report[3]  # latitude 
+        longitude = report[4]  # longitude 
+        
+        if not latitude or not longitude:
+            raise HTTPException(
+                status_code=404,
+                detail="Beach report exists but has no coordinates"
+            )
+        
+        conditions = ocean_data.get_ocean_conditions_for_location(
+            beach_name, latitude, longitude, days
+        )
+        
+        if "error" in conditions:
+            raise HTTPException(status_code=503, detail=conditions["error"])
+        
+        return conditions
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting conditions for beach: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve beach conditions")
+
+# GET CONDITIONS FOR SIGHTING LOCATION
+@app.get("/ocean-data/conditions/sighting/{sighting_id}")
+def get_conditions_for_sighting(sighting_id: int, days: int = 3):
+    try:
+        # get sighting from db
+        sighting = database.get_sighting_by_id(sighting_id)
+        
+        if not sighting:
+            raise HTTPException(status_code=404, detail="Sighting not found")
+        
+        latitude = sighting[5]  # latitude 
+        longitude = sighting[6]  # longitude
+        location_name = sighting[4]  # location_name
+        
+        if not latitude or not longitude:
+            raise HTTPException(
+                status_code=404,
+                detail="Sighting has no coordinates"
+            )
+        
+        conditions = ocean_data.get_ocean_conditions_for_location(
+            location_name or "Marine Sighting Location",
+            latitude, 
+            longitude, 
+            days
+        )
+        
+        if "error" in conditions:
+            raise HTTPException(status_code=503, detail=conditions["error"])
+        
+        # sighting context
+        conditions["sighting_context"] = {
+            "sighting_id": sighting_id,
+            "species_name": sighting[2],
+            "date_spotted": str(sighting[7])
+        }
+        
+        return conditions
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting conditions for sighting: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve sighting conditions")
+
+# FIND THE AVAILABLE TIDE STATIONS
+@app.get("/ocean-data/tide-stations")
+def get_available_tide_stations():
+    return ocean_data.get_available_tide_stations()
 
 if __name__ == "__main__":
     import uvicorn

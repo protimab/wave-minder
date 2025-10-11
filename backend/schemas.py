@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import date
 
 # USER SCHEMAS
@@ -123,3 +123,32 @@ class CommunityStatsResponse(BaseModel):
     actions_by_type: dict
     top_contributors: list
     recent_actions: list
+
+class LocationQuery(BaseModel):
+    location_name: str
+    latitude: float
+    longitude: float
+    days: Optional[int] = 3
+
+class TideDataResponse(BaseModel):
+    station_id: str
+    tides: List[Dict[str, Any]]
+    units: str
+    datum: str
+
+class MarineWeatherResponse(BaseModel):
+    location: Dict[str, float]
+    current_conditions: Dict[str, Any]
+    daily_forecast: List[Dict[str, Any]]
+    units: str
+
+class WaterTemperatureResponse(BaseModel):
+    location: Dict[str, float]
+    temperature_data: List[Dict[str, Any]]
+    units: str
+
+class OceanConditionsResponse(BaseModel):
+    location: Dict[str, Any]
+    timestamp: str
+    data: Dict[str, Any]
+    summary: Dict[str, Any]
