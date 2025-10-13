@@ -1,9 +1,9 @@
 import requests
 from datetime import datetime, timedelta
-from typing import Optional, Dict, List
+from typing import Optional
 
 # API CONFIGS
-NOAA_TIDES_BASE_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+NOAA_TIDES_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
 OPEN_METEO_MARINE_URL = "https://marine-api.open-meteo.com/v1/marine"
 API_TIMEOUT = 10
 
@@ -39,7 +39,7 @@ def get_tide_data(station_id: str, date: str = None, days: int = 1) -> dict:
     """
     if not date:
         date = datetime.now().strftime("%Y%m%d")
-    end_date = (datetime.strptime(date, "%Y%m%d") + timedelta(days=days)).strftime("%Y%m%d")
+    end_date = (datetime.now() + timedelta(days=days)).strftime("%Y%m%d")
     
     params = {
         "product": "predictions",
@@ -54,29 +54,21 @@ def get_tide_data(station_id: str, date: str = None, days: int = 1) -> dict:
         "format": "json"
     }
     
-    result = safe_api_call(NOAA_TIDES_BASE_URL, params)
-    if not result["success"]:
-        return {"error": result["error"], "station_id": station_id}
-    data = result["data"]
-
-    if "predictions" not in data:
+    result = safe_api_call(NOAA_TIDES_URL, params)
+    if not result["success"] or "predictions" not in result["data"]:
         return {"error": "No tide data available", "station_id": station_id}
+    data = result["data"]
         
     tides = [
         {
             "time": pred["t"],
             "height_feet": float(pred["v"]),
-            "type": pred["type"]  # "H" = high, "L" = low
+            "type": "high" if pred["type"] == "H" else "low"
         }
         for pred in data["predictions"]
     ]
         
-    return {
-        "station_id": station_id,
-        "tides": tides,
-        "units": "feet",
-        "datum": "MLLW"
-    }
+    return {"station_id": station_id, "tides": tides, "units": "feet", "datum": "MLLW"}
         
 # MARINE WEATHER 
 def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict:
@@ -86,8 +78,8 @@ def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "hourly": "wave_height,wave_direction,wave_period,wind_wave_height,swell_wave_height",
-        "daily": "wave_height_max,wave_direction_dominant,wave_period_max",
+        "hourly": "wave_height,wave_direction,wave_period",
+        "daily": "wave_height_max,wave_direction_dominant",
         "timezone": "auto",
         "forecast_days": min(days, 7)
     }
@@ -99,9 +91,9 @@ def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict
     data = result["data"]
         
     # parse current conditions (first hourly entry)
-    current_conditions = {}
+    current = {}
     if "hourly" in data and data["hourly"]["time"]:
-        current_conditions = {
+        current = {
             "wave_height_m": data["hourly"]["wave_height"][0],
             "wave_direction": data["hourly"]["wave_direction"][0],
             "wave_period_s": data["hourly"]["wave_period"][0],
@@ -111,21 +103,19 @@ def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict
         }
         
     # parse the daily forecast
-    daily_forecast = []
+    daily  = []
     if "daily" in data:
         for i in range(len(data["daily"]["time"])):
-            daily_forecast.append({
+            daily.append({
                 "date": data["daily"]["time"][i],
                 "max_wave_height_m": data["daily"]["wave_height_max"][i],
-                "dominant_wave_direction": data["daily"]["wave_direction_dominant"][i],
-                "max_wave_period_s": data["daily"]["wave_period_max"][i]
+                "dominant_direction": data["daily"]["wave_direction_dominant"][i],
             })
     
     return {
         "location": {"latitude": latitude, "longitude": longitude},
-        "current_conditions": current_conditions,
-        "daily_forecast": daily_forecast,
-        "units": "metric"
+        "current": current,
+        "forecast": daily,
     }
 
 # WATER TEMPERATURE 
@@ -136,7 +126,7 @@ def get_water_temperature(latitude: float, longitude: float, days: int = 7) -> d
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "daily": "ocean_surface_temperature_mean,ocean_surface_temperature_max,ocean_surface_temperature_min",
+        "daily": "ocean_surface_temperature_mean",
         "timezone": "auto",
         "forecast_days": min(days, 7)
     }
@@ -147,26 +137,22 @@ def get_water_temperature(latitude: float, longitude: float, days: int = 7) -> d
         return {"error": result["error"]}
     data = result["data"]
         
-    temperature_data = []
+    temps = []
     if "daily" in data:
         for i in range(len(data["daily"]["time"])):
-            temperature_data.append({
+            temps.append({
                 "date": data["daily"]["time"][i],
-                "mean_temp_c": data["daily"]["ocean_surface_temperature_mean"][i],
-                "max_temp_c": data["daily"]["ocean_surface_temperature_max"][i],
-                "min_temp_c": data["daily"]["ocean_surface_temperature_min"][i]
+                "temp_c": data["daily"]["ocean_surface_temperature_mean"][i],
             })
     
     return {
         "location": {"latitude": latitude, "longitude": longitude},
-        "temperature_data": temperature_data,
-        "units": "celsius"
+        "temperature_data": temps,
     }
         
 # LOCATION QUERIES
-
-def find_nearest_tide_station(location_name: str) -> Optional[str]:
-    """ find nearest tide station for given location
+def find_tide_station(location_name: str) -> Optional[str]:
+    """ find tide station for given location
     return station ID or None """
     location_name = location_name.lower().replace(" ", "_")
     
@@ -180,7 +166,7 @@ def find_nearest_tide_station(location_name: str) -> Optional[str]:
     
     return None
 
-def get_ocean_conditions_for_location(location_name: str, latitude: float, 
+def get_ocean_conditions(location_name: str, latitude: float, 
                                      longitude: float, days: int = 3) -> dict:
     """ get complete ocean conditions for a location
     return dict with all the ocean data (tides, weather, temperature) """
@@ -192,87 +178,26 @@ def get_ocean_conditions_for_location(location_name: str, latitude: float,
     }
         
     # get tide data if station available
-    station_id = find_nearest_tide_station(location_name)
+    station_id = find_tide_station(location_name)
     if station_id:
-        tide_data = get_tide_data(station_id, days=days)
+        tide_data = get_tide_data(station_id, days)
         if "error" not in tide_data:
             result["data"]["tides"] = tide_data
     
     # get marine weather
-    marine_weather = get_marine_weather(latitude, longitude, days=days)
-    if "error" not in marine_weather:
-        result["data"]["marine_weather"] = marine_weather
+    weather = get_marine_weather(latitude, longitude, days)
+    if "error" not in weather:
+        result["data"]["weather"] = weather
     
     # get water temp
-    water_temp = get_water_temperature(latitude, longitude, days=days)
-    if "error" not in water_temp:
-        result["data"]["water_temperature"] = water_temp
-    
-    # conditions summary
-    result["summary"] = generate_conditions_summary(result["data"])
+    temp = get_water_temperature(latitude, longitude, days)
+    if "error" not in temp:
+        result["data"]["temperature"] = temp
     
     return result
-        
-def generate_conditions_summary(data: dict) -> dict:
-    """summary of current ocean conditions"""
-    summary = {
-        "overall_rating": "unknown",
-        "best_for": [],
-        "warnings": []
-    }
-    
-    try:
-        # check wave conditions
-        if "marine_weather" in data:
-            current = data["marine_weather"].get("current_conditions", {})
-            wave_height = current.get("wave_height_m", 0)
-            
-        conditions = [
-            (0.5, "calm", ["swimming", "paddleboarding"], []),
-            (1.5, "moderate", ["surfing", "kayaking"], []),
-            (3.0, "active", ["experienced surfing"], ["Strong waves - be cautious!"]),
-            (float('inf'), "rough", [], ["High surf conditions - experienced swimmers only"])
-        ]
-        
-        for threshold, rating, activities, warns in conditions:
-                if wave_height < threshold:
-                    summary["overall_rating"] = rating
-                    summary["best_for"].extend(activities)
-                    summary["warnings"].extend(warns)
-                    break
-       
-       
-        # check water temp
-        if "water_temperature" in data:
-            temp_data = data["water_temperature"].get("temperature_data", [])
-            if temp_data:
-                current_temp = temp_data[0].get("mean_temp_c", 0)
-                if current_temp < 15:
-                    summary["warnings"].append("Cold water - wetsuit attire recommended")
-                elif current_temp > 24:
-                    summary["best_for"].append("warm water activities")
-        
-        # check tides
-        if "tides" in data:
-            tides = data["tides"].get("tides", [])
-            if tides:
-                next_tide = tides[0]
-                summary["next_tide"] = {
-                    "type": "high" if next_tide["type"] == "H" else "low",
-                    "time": next_tide["time"],
-                    "height_feet": next_tide["height_feet"]
-                }
-        
-    except Exception as e:
-        print(f"Error generating summary: {e}")
-    
-    return summary
 
 # HELPER
 def validate_coordinates(latitude: float, longitude: float) -> bool:
     """validate latitude and longitude"""
     return -90 <= latitude <= 90 and -180 <= longitude <= 180
 
-def get_available_tide_stations() -> dict:
-    """list of all available tide stations"""
-    return {"stations": TIDE_STATIONS,"total_count": len(TIDE_STATIONS)}

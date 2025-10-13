@@ -12,8 +12,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 #hash password
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def get_password_hash(password: str) -> str:
     """ hash password """
@@ -24,37 +23,24 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(user_email: str, expires_delta: Optional[timedelta] = None) -> str:
-    """ JWT access token """
+    """ create JWT access token """
     to_encode = {"sub": user_email}
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     to_encode.update({"exp": expire})
     token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return token
 
 def verify_token(token: str) -> str:
     """ decode token, return email """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    
     try:
         # decode token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")  # "sub" -> user
-        
         if email is None:
-            raise credentials_exception   
-        print(f"Token verified for user email: {email}")
-        return email
-        
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        return email 
     except JWTError as e:
-        print(f"JWT Error: {e}")
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     """ get user from a JWT token """
@@ -63,13 +49,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     # look up user
     user = database.get_user_by_email(email)
     if user is None:
-        print(f"User not found in database: {email}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
-    
-    print(f"Current user authenticated: {user['name']}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user #tuple
 
 def authenticate_user(email: str, password: str):
@@ -78,11 +58,7 @@ def authenticate_user(email: str, password: str):
     user = database.get_user_by_email(email)
     if not user:
         return False
-    
     # check password
     if not verify_password(password, user['hashed_password']):
-        print(f"Invalid password for user: {email}")
         return False
-    
-    print(f"User authenticated successfully: {email}")
     return user #tuple
