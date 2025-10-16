@@ -57,7 +57,6 @@ def get_tide_data(station_id: str, date: str = None, days: int = 1) -> dict:
     result = safe_api_call(NOAA_TIDES_URL, params)
     if not result["success"] or "predictions" not in result["data"]:
         return {"error": "No tide data available", "station_id": station_id}
-    data = result["data"]
         
     tides = [
         {
@@ -65,10 +64,10 @@ def get_tide_data(station_id: str, date: str = None, days: int = 1) -> dict:
             "height_feet": float(pred["v"]),
             "type": "high" if pred["type"] == "H" else "low"
         }
-        for pred in data["predictions"]
+        for pred in result["data"]["predictions"]
     ]
         
-    return {"station_id": station_id, "tides": tides, "units": "feet", "datum": "MLLW"}
+    return {"station_id": station_id, "tides": tides, "units": "feet"}
         
 # MARINE WEATHER 
 def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict:
@@ -78,8 +77,8 @@ def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "hourly": "wave_height,wave_direction,wave_period",
-        "daily": "wave_height_max,wave_direction_dominant",
+        "hourly": "wave_height,wave_direction,wave_period, wind_wave_height, swell_wave_height",
+        "daily": "wave_height_max,wave_direction_dominant, wave_period_max",
         "timezone": "auto",
         "forecast_days": min(days, 7)
     }
@@ -110,12 +109,13 @@ def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict
                 "date": data["daily"]["time"][i],
                 "max_wave_height_m": data["daily"]["wave_height_max"][i],
                 "dominant_direction": data["daily"]["wave_direction_dominant"][i],
+                "max_wave_period_s": data["daily"]["wave_period_max"][i]
             })
     
     return {
         "location": {"latitude": latitude, "longitude": longitude},
         "current": current,
-        "forecast": daily,
+        "forecast": daily
     }
 
 # WATER TEMPERATURE 
@@ -142,12 +142,12 @@ def get_water_temperature(latitude: float, longitude: float, days: int = 7) -> d
         for i in range(len(data["daily"]["time"])):
             temps.append({
                 "date": data["daily"]["time"][i],
-                "temp_c": data["daily"]["ocean_surface_temperature_mean"][i],
+                "temp_c": data["daily"]["ocean_surface_temperature_mean"][i]
             })
     
     return {
         "location": {"latitude": latitude, "longitude": longitude},
-        "temperature_data": temps,
+        "temperature_data": temps
     }
         
 # LOCATION QUERIES

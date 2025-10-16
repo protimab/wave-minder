@@ -27,7 +27,7 @@ def calculate_beach_quality(water_quality: int, pollution_level: int, wildlife_a
     """calculate beach quality score(1-5)"""
     base = (water_quality * 0.4) + (pollution_level * 0.5)
     wildlife_bonus = {"high": 0.5, "medium": 0.3, "low": 0.1, "none": 0}.get(wildlife_activity or "none", 0)
-    return min(5.0, max(1.0, base + wildlife_bonus))
+    return round(min(5.0, max(1.0, base + wildlife_bonus)))
 
 # HELPER FUNCTIONS - Convert DB tuples to response models
 def sighting_to_response(s):

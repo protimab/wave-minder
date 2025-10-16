@@ -53,12 +53,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     return user #tuple
 
 def authenticate_user(email: str, password: str):
-    """ Authenticate a user with email and password """
+    """ authenticate user with email and password """
     # get
     user = database.get_user_by_email(email)
     if not user:
         return False
     # check password
-    if not verify_password(password, user['hashed_password']):
+    if not verify_password(password, user[3]):
         return False
     return user #tuple

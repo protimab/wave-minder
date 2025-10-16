@@ -46,7 +46,6 @@ class MarineSightingResponse(BaseModel):
     group_size: int
     behavior: Optional[str] = None
     notes: Optional[str] = None
-    verified: bool
     created_at: str
     user_name: Optional[str] = None
 
@@ -62,7 +61,6 @@ class BeachReportCreate(BaseModel):
     weather_conditions: Optional[str] = None
     notes: Optional[str] = None
     report_date: date
-    photo_url: Optional[str] = None
 
 class BeachReportResponse(BaseModel):
     id: int
@@ -76,7 +74,6 @@ class BeachReportResponse(BaseModel):
     weather_conditions: Optional[str] = None
     notes: Optional[str] = None
     report_date: date
-    photo_url: Optional[str] = None
     created_at: str
     user_name: Optional[str] = None
     quality_score: Optional[float] = None 
@@ -93,8 +90,6 @@ class ConservationActionCreate(BaseModel):
     waste_collected: Optional[float] = 0  # in kg
     area_covered: Optional[float] = 0  # in square meters
     date_completed: date
-    duration_hours: Optional[float] = None
-    photo_url: Optional[str] = None
 
 class ConservationActionResponse(BaseModel):
     id: int
@@ -109,8 +104,6 @@ class ConservationActionResponse(BaseModel):
     waste_collected: float
     area_covered: float
     date_completed: date
-    duration_hours: Optional[float] = None
-    photo_url: Optional[str] = None
     created_at: str
     user_name: Optional[str] = None
 
@@ -124,31 +117,3 @@ class CommunityStatsResponse(BaseModel):
     top_contributors: list
     recent_actions: list
 
-class LocationQuery(BaseModel):
-    location_name: str
-    latitude: float
-    longitude: float
-    days: Optional[int] = 3
-
-class TideDataResponse(BaseModel):
-    station_id: str
-    tides: List[Dict[str, Any]]
-    units: str
-    datum: str
-
-class MarineWeatherResponse(BaseModel):
-    location: Dict[str, float]
-    current_conditions: Dict[str, Any]
-    daily_forecast: List[Dict[str, Any]]
-    units: str
-
-class WaterTemperatureResponse(BaseModel):
-    location: Dict[str, float]
-    temperature_data: List[Dict[str, Any]]
-    units: str
-
-class OceanConditionsResponse(BaseModel):
-    location: Dict[str, Any]
-    timestamp: str
-    data: Dict[str, Any]
-    summary: Dict[str, Any]
