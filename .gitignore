@@ -1,3 +1,5 @@
+#BACKEND 
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +207,96 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+waveminder.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+#FRONTEND
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript (if you add it later)
+*.tsbuildinfo
+
+# ===========================
+# GENERAL
+# ===========================
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Editor backup files
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Logs
+*.log
+logs/
+
+# Secret keys and configs
+secrets.py
+secrets.json
+config.local.py
+*.pem
+*.key
+*.cert
+
+# Uploaded files (if any)
+uploads/
+media/
+static/uploads/
+
+# Documentation builds
+docs/_build/
+site/
+
+# Temporary files
+tmp/
+temp/
+*.cache

@@ -77,8 +77,8 @@ def get_marine_weather(latitude: float, longitude: float, days: int = 3) -> dict
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "hourly": "wave_height,wave_direction,wave_period, wind_wave_height, swell_wave_height",
-        "daily": "wave_height_max,wave_direction_dominant, wave_period_max",
+        "hourly": "wave_height,wave_direction,wave_period,wind_wave_height,swell_wave_height",
+        "daily": "wave_height_max,wave_direction_dominant,wave_period_max",
         "timezone": "auto",
         "forecast_days": min(days, 7)
     }

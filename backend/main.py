@@ -27,7 +27,7 @@ def calculate_beach_quality(water_quality: int, pollution_level: int, wildlife_a
     """calculate beach quality score(1-5)"""
     base = (water_quality * 0.4) + (pollution_level * 0.5)
     wildlife_bonus = {"high": 0.5, "medium": 0.3, "low": 0.1, "none": 0}.get(wildlife_activity or "none", 0)
-    return round(min(5.0, max(1.0, base + wildlife_bonus)))
+    return round(min(5.0, max(1.0, base + wildlife_bonus)), 2)
 
 # HELPER FUNCTIONS - Convert DB tuples to response models
 def sighting_to_response(s):
@@ -45,7 +45,7 @@ def beach_report_to_response(r):
         id=r[0], beach_name=r[2], latitude=r[3], longitude=r[4],
         water_quality=r[5], pollution_level=r[6], water_temp=r[7],
         wildlife_activity=r[8], notes=r[9], report_date=r[10], created_at=str(r[11]),
-        user_name=r[12], quality_score=quality_score["score"]
+        user_name=r[12], quality_score=quality_score
     )
 
 def conservation_to_response(a):
@@ -259,7 +259,7 @@ def get_ocean_conditions(location_name: str, latitude: float, longitude: float, 
     if days < 1 or days > 7:
         raise HTTPException(status_code=400, detail="Days must be between 1 and 7")
     
-    conditions = ocean_data.get_ocean_conditions_for_location(location_name, latitude, longitude, days)
+    conditions = ocean_data.get_ocean_conditions(location_name, latitude, longitude, days)
     return conditions
 
 # COMMUNITY STATS

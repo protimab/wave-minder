@@ -100,7 +100,6 @@ class ConservationActionResponse(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     participants: int
-    impact_score: float
     waste_collected: float
     area_covered: float
     date_completed: date
@@ -112,7 +111,6 @@ class CommunityStatsResponse(BaseModel):
     total_participants: int
     total_waste_collected_kg: float
     total_area_covered_sqm: float
-    total_impact_score: float
     actions_by_type: dict
     top_contributors: list
     recent_actions: list
