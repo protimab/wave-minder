@@ -123,7 +123,24 @@ const BeachReportForm = () => {
               ))}
             </select>
           </div>
+          <div className="form-group">
+            <label htmlFor="pollution_level">Pollution Level (1-5) *</label>
+            <select
+              id="pollution_level"
+              name="pollution_level"
+              value={formData.pollution_level}
+              onChange={handleChange}
+              required
+            >
+              {QUALITY_SCALE.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+            
 
         <div className="form-row">
           <div className="form-group">
