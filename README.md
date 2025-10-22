@@ -27,7 +27,7 @@ Welcome to my marine conservation platform :
 
 ## Backend Setup
 
-###1. Create Python Virtual Environment
+### 1. Create Python Virtual Environment
 
 ```
 cd backend
@@ -39,17 +39,17 @@ venv\Scripts\activate
 # On Mac/Linux:
 source venv/bin/activate
 ```
-###2. Install Dependencies
+### 2. Install Dependencies
 ```
 pip install -r requirements.txt
 ```
 
-###3. Initialize Database (create all required tables)
+### 3. Initialize Database (create all required tables)
 ```
 python database.py
 ```
 
-###4. Start Backend Server
+### 4. Start Backend Server
 ```
 python main.py
 # Or
@@ -57,25 +57,25 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ```
 
-##Frontend Setup
+## Frontend Setup
 
-###1. Install Node Dependencies
+### 1. Install Node Dependencies
 ```
 cd frontend
 npm install
 ```
 
-###2. Start Development Server
+### 2. Start Development Server
 ```
 npm start
 ```
 
-##Access Application
+## Access Application
 
 - **Frontend:** http://localhost:3000
 
 - **Backend API:** http://localhost:8000
-- 
+  
 - **API Docs:** http://localhost:8000/docs
 
 
