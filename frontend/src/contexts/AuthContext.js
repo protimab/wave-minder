@@ -33,6 +33,24 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   };
 
+  const extractErrorMessage = (err) => {
+    // handle different error response formats
+    if (err.response?.data?.detail) {
+      const detail = err.response.data.detail;
+      // detail is an array of validation errors
+      if (Array.isArray(detail)) {
+        return detail;
+      }
+      // detail is a string
+      if (typeof detail === 'string') {
+        return detail;
+      }
+      // detail is an object
+      return detail.msg || JSON.stringify(detail);
+    }
+    return err.message || 'An error occurred';
+  };
+
   const login = async (email, password) => {
     try {
       setError(null);
@@ -42,7 +60,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userResponse.data);
       return { success: true };
     } catch (err) {
-      const message = err.response?.data?.detail || 'Login failed';
+      const message = extractErrorMessage(err);
       setError(message);
       return { success: false, error: message };
     }
@@ -55,7 +73,7 @@ export const AuthProvider = ({ children }) => {
       // auto login after signup
       return await login(userData.email, userData.password);
     } catch (err) {
-      const message = err.response?.data?.detail || 'Signup failed';
+      const message = extractErrorMessage(err);
       setError(message);
       return { success: false, error: message };
     }

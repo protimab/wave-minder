@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import database
@@ -82,8 +82,8 @@ def signup(request: schemas.UserCreate):
     )
 
 @app.post("/login", response_model=schemas.Token)
-def login(request: schemas.UserCreate):
-    user = auth.authenticate_user(request.email, request.password)
+def login(email: str = Form(...), password: str = Form(...)):
+    user = auth.authenticate_user(email, password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
     return schemas.Token(

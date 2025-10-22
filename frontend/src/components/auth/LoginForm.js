@@ -13,6 +13,22 @@ const LoginForm = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const formatError = (errorDetail) => {
+    // array of validation errors from FastAPI
+    if (Array.isArray(errorDetail)) {
+      return errorDetail.map(err => err.msg || JSON.stringify(err)).join(', ');
+    }
+    // string errors
+    if (typeof errorDetail === 'string') {
+      return errorDetail;
+    }
+    // object errors
+    if (typeof errorDetail === 'object') {
+      return errorDetail.msg || JSON.stringify(errorDetail);
+    }
+    return 'An error occurred';
+  };
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -32,7 +48,7 @@ const LoginForm = () => {
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setError(result.error);
+      setError(formatError(result.error));
     }
   };
 

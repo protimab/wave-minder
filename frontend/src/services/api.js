@@ -20,7 +20,16 @@ api.interceptors.request.use((config) => {
 // Auth API
 export const authAPI = {
   signup: (data) => api.post('/signup', data),
-  login: (data) => api.post('/login', data),
+  login: (data) => {
+    const formData = new URLSearchParams();
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    return api.post('/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+  },
   getCurrentUser: () => api.get('/me'),
 };
 
