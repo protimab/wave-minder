@@ -20,10 +20,10 @@ Welcome to my marine conservation platform :
 
  ## 🔧 Technology Stack
    
-  ###Backend:
+  ### Backend:
   - FastAPI, SQLite, JWT, Passlib, Requests 
   
-  ###Frontend:
+  ### Frontend:
   - React, Axios, Lucide React, CSS
     
 
