@@ -1,7 +1,7 @@
 # WaveMinder
 Welcome to my marine conservation platform :
 
-📍 **Core Features**:  
+## 📍 Core Features
 
   🐳 Marine Wildlife Sightings - Users report dolphin, whale, turtle sightings with photos
 
@@ -18,11 +18,13 @@ Welcome to my marine conservation platform :
   🗺️ Community Impact Map - Visual representation of all conservation activities
 
 
-🔧 **Technology Stack** 
+ ## 🔧 Technology Stack
    
-    Backend: FastAPI, SQLite/SQL, JWT Authentication, Pillow, Requests
-    Frontend: React, Leaflet, Chart.js
-    External APIs: Marine Weather API (https://open-meteo.com/en/docs/marine-weather-api), Tide API (https://www.worldtides.info/apidocs), Species Database API (https://techdocs.gbif.org/en/openapi/v1/species)
+  ###Backend:
+  - FastAPI, SQLite, JWT, Passlib, Requests 
+  
+  ###Frontend:
+  - React, Axios, Lucide React, CSS
     
 
 ## Backend Setup
@@ -77,5 +79,29 @@ npm start
 - **Backend API:** http://localhost:8000
   
 - **API Docs:** http://localhost:8000/docs
+
+## Troubleshooting
+
+### Backend Issues
+
+- Ensure Python 3.8+ is installed
+  
+- Check all dependencies are installed: ``` pip list ```
+  
+- Verify database was initialized: check for waveminder.db file
+
+### Frontend Issues
+
+- Clear npm cache: ``` npm cache clean --force ```
+  
+- Delete node_modules and reinstall: ``` rm -rf node_modules && npm install ```
+  
+- Check console for errors in browser 
+
+## CORS Issues
+
+- Ensure backend CORS is configured for http://localhost:3000
+  
+- Check that both servers are running
 
 
