@@ -25,23 +25,57 @@ Welcome to my marine conservation platform :
     External APIs: Marine Weather API (https://open-meteo.com/en/docs/marine-weather-api), Tide API (https://www.worldtides.info/apidocs), Species Database API (https://techdocs.gbif.org/en/openapi/v1/species)
     
 
-# Impact Scoring System Guide
-The impact scoring system quantifies the environmental and social impact of conservation actions, encouraging individuals to participate and recognizing any contributions.
+## Backend Setup
 
-## How Impact Score is Calculated:
+###1. Create Python Virtual Environment
 
-**Base Score Components**:
+```
+cd backend
+python -m venv venv
 
-Participant Score: 1 point per participant
+# Activate virtual environment
+# On Windows:
+venv\Scripts\activate
+# On Mac/Linux:
+source venv/bin/activate
+```
+###2. Install Dependencies
+```
+pip install -r requirements.txt
+```
 
-Waste Collection Bonus: 2 points per kg of waste collected
+###3. Initialize Database (create all required tables)
+```
+python database.py
+```
 
-Area Coverage Bonus: 0.01 point per square meter covered
+###4. Start Backend Server
+```
+python main.py
+# Or
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-Duration Bonus: 0.5 point per hour spent
+```
 
-**Formula:**
+##Frontend Setup
 
-Raw Score = (Participants × 1.0) + (Waste_kg × 2.0) + (Area_sqm × 0.01) + (Hours × 0.5)
+###1. Install Node Dependencies
+```
+cd frontend
+npm install
+```
 
-Final Impact Score = Raw Score × Action Type Multiplier
+###2. Start Development Server
+```
+npm start
+```
+
+##Access Application
+
+- **Frontend:** http://localhost:3000
+
+- **Backend API:** http://localhost:8000
+- 
+- **API Docs:** http://localhost:8000/docs
+
+
