@@ -73,10 +73,10 @@ const LoginForm = () => {
   };
 
   return (
-       <div className="min-h-screen flex justify-center items-center bg-ocean-gradient relative overflow-hidden p-5">
-      {/* Animated bg elements */}
+    <div className="min-h-screen flex justify-center items-center bg-ocean-gradient relative overflow-hidden p-5">
+      {/* info about the animated bg elements */}
       <motion.div 
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0 opacity-30"
         animate={{ 
           backgroundPosition: ['0% 0%', '100% 100%'],
         }}
@@ -86,13 +86,24 @@ const LoginForm = () => {
           repeatType: 'reverse' 
         }}
       >
-        <FaFish className="absolute top-20 left-10 text-ocean-200 text-6xl animate-float" />
-        <MdWaves className="absolute bottom-20 right-10 text-ocean-200 text-8xl animate-wave" />
-        <FaWater className="absolute top-1/2 left-1/4 text-ocean-200 text-5xl animate-float" style={{ animationDelay: '2s' }} />
+        <FaFish className="absolute top-20 left-20 text-ocean-200 text-6xl animate-float" /> {/* fish */}
+        <FaFish className="absolute bottom-20 right-10 text-ocean-600 text-6xl opacity-100 animate-float" />
+        <MdWaves className="absolute bottom-10 left-1/4 text-ocean-200 text-5xl animate-wave" /> {/* wave */}
+        <MdWaves className="absolute bottom-5 right-1/4 text-ocean-600 text-5xl animate-wave" />
+        <FaWater className="absolute top-10 left-1/4 text-ocean-200 text-4xl animate-float" /> {/* ripples */}
+        <FaWater className="absolute top-1/4 right-1/4 text-ocean-600 text-4xl animate-float" />
+
+        <FaFish className="absolute top-50 left-50 text-ocean-200 text-6xl animate-float" /> {/* fish */}
+        <FaFish className="absolute bottom-40 right-20 text-ocean-600 text-6xl opacity-100 animate-float" />
+        <MdWaves className="absolute bottom-20 left-1/8 text-ocean-200 text-5xl animate-wave" /> {/* wave */}
+        <MdWaves className="absolute bottom-20 right-1/8 text-ocean-600 text-5xl animate-wave" />
+        <FaWater className="absolute top-20 left-1/8 text-ocean-200 text-4xl animate-float" /> {/* ripples */}
+        <FaWater className="absolute top-1/4 right-1/8 text-ocean-600 text-4xl animate-float" />
+
       </motion.div>
 
       <motion.div 
-        className="bg-white/95 backdrop-blur-lg rounded-3xl p-12 w-full max-w-md shadow-2xl relative z-10 border border-ocean-200/20"
+        className="bg-white rounded-3xl p-12 w-full max-w-md shadow-3xl relative z-10 border border-ocean-400/20"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
