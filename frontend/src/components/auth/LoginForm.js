@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaEnvelope, FaLock, FaWater, FaFish } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaWater, FaFish,FaEye, FaEyeSlash } from 'react-icons/fa';
 import { MdWaves } from 'react-icons/md';
+import { GiShrimp, GiSeaTurtle, GiJellyfish } from 'react-icons/gi';
 
 const LoginForm = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const LoginForm = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -72,57 +74,161 @@ const LoginForm = () => {
     visible: { opacity: 1, x: 0 }
   };
 
+  /* animations variants */
+  const floatVariants = {
+    animate: {
+      y: [0, -30, 0],
+      x: [0, 15, 0],
+      transition: {
+        duration: 8,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  const swimVariants = {
+    animate: {
+      x: [0, 40, 0],
+      y: [0, -20, 0],
+      rotate: [0, 5, 0, -5, 0],
+      transition: {
+        duration: 12,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  const waveVariants = {
+    animate: {
+      x: [0, -30, 0],
+      y: [0, 10, 0],
+      scale: [1, 1.1, 1],
+      transition: {
+        duration: 6,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
+  const jellyfishVariants = {
+    animate: {
+      y: [0, -40, 0],
+      scale: [1, 1.05, 1],
+      transition: {
+        duration: 10,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen flex justify-center items-center bg-ocean-gradient relative overflow-hidden p-5">
-      {/* info about the animated bg elements */}
+    <div className="min-h-screen flex justify-center items-center bg-ocean-gradient relative overflow-hidden ">
+      {/* animate bg elements */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        {/* top left */}
+        <motion.div variants={floatVariants} animate="animate" className="absolute top-[10%] left-[5%] lg:left-[8%]">
+          <FaFish className="text-ocean-200 text-4xl md:text-5xl" />
+        </motion.div>
+        <motion.div variants={swimVariants} animate="animate" style={{ animationDelay: '1s' }} className="absolute top-[15%] left-[12%] lg:left-[15%]">
+          <GiShrimp className="text-ocean-300 text-3xl md:text-4xl" />
+        </motion.div>
+        <motion.div variants={waveVariants} animate="animate" className="absolute top-[8%] left-[18%] lg:left-[20%]">
+          <FaWater className="text-ocean-200 text-2xl md:text-3xl" />
+        </motion.div>
+
+        {/* top right */}
+        <motion.div variants={swimVariants} animate="animate" style={{ animationDelay: '2s' }} className="absolute top-[12%] right-[5%] lg:right-[10%]">
+          <FaFish className="text-ocean-300 text-5xl md:text-6xl transform scale-x-[-1]" />
+        </motion.div>
+        <motion.div variants={jellyfishVariants} animate="animate" className="absolute top-[18%] right-[15%] lg:right-[18%]">
+          <GiJellyfish className="text-ocean-200 text-4xl md:text-5xl" />
+        </motion.div>
+        <motion.div variants={floatVariants} animate="animate" style={{ animationDelay: '3s' }} className="absolute top-[5%] right-[22%] lg:right-[25%]">
+          <FaWater className="text-ocean-300 text-3xl md:text-4xl" />
+        </motion.div>
+
+        {/* middle left */}
+        <motion.div variants={jellyfishVariants} animate="animate" style={{ animationDelay: '1.5s' }} className="hidden lg:block absolute top-[40%] left-[5%]">
+          <GiJellyfish className="text-ocean-200 text-4xl" />
+        </motion.div>
+        <motion.div variants={swimVariants} animate="animate" className="hidden lg:block absolute top-[45%] left-[12%]">
+          <FaFish className="text-ocean-300 text-5xl" />
+        </motion.div>
+
+        {/* middle right */}
+        <motion.div variants={floatVariants} animate="animate" style={{ animationDelay: '2.5s' }} className="hidden lg:block absolute top-[38%] right-[8%]">
+          <GiSeaTurtle className="text-ocean-300 text-7xl" />
+        </motion.div>
+        <motion.div variants={swimVariants} animate="animate" style={{ animationDelay: '4s' }} className="hidden lg:block absolute top-[48%] right-[15%]">
+          <FaFish className="text-ocean-200 text-4xl transform scale-x-[-1]" />
+        </motion.div>
+
+        {/* bottom left */}
+        <motion.div variants={waveVariants} animate="animate" className="absolute bottom-[15%] left-[5%] lg:left-[10%]">
+          <MdWaves className="text-ocean-200 text-5xl md:text-6xl" />
+        </motion.div>
+        <motion.div variants={swimVariants} animate="animate" style={{ animationDelay: '3s' }} className="absolute bottom-[20%] left-[15%] lg:left-[18%]">
+          <FaFish className="text-ocean-300 text-4xl md:text-5xl" />
+        </motion.div>
+        <motion.div variants={floatVariants} animate="animate" style={{ animationDelay: '1s' }} className="absolute bottom-[12%] left-[2%] lg:left-[5%]">
+          <GiShrimp className="text-ocean-200 text-2xl md:text-3xl" />
+        </motion.div>
+
+        {/* bottom right */}
+        <motion.div variants={waveVariants} animate="animate" style={{ animationDelay: '2s' }} className="absolute bottom-[18%] right-[8%] lg:right-[12%]">
+          <MdWaves className="text-ocean-300 text-6xl md:text-7xl" />
+        </motion.div>
+        <motion.div variants={floatVariants} animate="animate" style={{ animationDelay: '4s' }} className="absolute bottom-[25%] right-[18%] lg:right-[20%]">
+          <FaFish className="text-ocean-200 text-4xl md:text-5xl transform scale-x-[-1]" />
+        </motion.div>
+        <motion.div variants={jellyfishVariants} animate="animate" style={{ animationDelay: '1.5s' }} className="absolute bottom-[10%] right-[5%] lg:right-[8%]">
+          <GiJellyfish className="text-ocean-300 text-3xl md:text-4xl" />
+        </motion.div>
+
+        {/* bottom center */}
+        <motion.div variants={waveVariants} animate="animate" style={{ animationDelay: '3s' }} className="hidden md:block absolute bottom-[8%] left-[45%]">
+          <MdWaves className="text-ocean-200 text-5xl" />
+        </motion.div>
+        <motion.div variants={swimVariants} animate="animate" style={{ animationDelay: '2s' }} className="hidden md:block absolute bottom-[22%] left-[40%]">
+          <FaWater className="text-ocean-300 text-4xl" />
+        </motion.div>
+
+        {/* additional elements */}
+        <motion.div variants={floatVariants} animate="animate" style={{ animationDelay: '5s' }} className="hidden xl:block absolute top-[30%] left-[30%]">
+          <FaWater className="text-ocean-200 text-3xl" />
+        </motion.div>
+        <motion.div variants={swimVariants} animate="animate" style={{ animationDelay: '6s' }} className="hidden xl:block absolute top-[60%] right-[35%]">
+          <GiShrimp className="text-ocean-300 text-3xl" />
+        </motion.div>
+        <motion.div variants={jellyfishVariants} animate="animate" style={{ animationDelay: '4s' }} className="hidden xl:block absolute top-[25%] right-[40%]">
+          <GiJellyfish className="text-ocean-200 text-4xl" />
+        </motion.div>
+      </div>
+
+      { /* form box */ }
       <motion.div 
-        className="absolute inset-0 opacity-30"
-        animate={{ 
-          backgroundPosition: ['0% 0%', '100% 100%'],
-        }}
-        transition={{ 
-          duration: 20, 
-          repeat: Infinity, 
-          repeatType: 'reverse' 
-        }}
-      >
-        <FaFish className="absolute top-20 left-20 text-ocean-200 text-6xl animate-float" /> {/* fish */}
-        <FaFish className="absolute bottom-20 right-10 text-ocean-600 text-6xl opacity-100 animate-float" />
-        <MdWaves className="absolute bottom-10 left-1/4 text-ocean-200 text-5xl animate-wave" /> {/* wave */}
-        <MdWaves className="absolute bottom-5 right-1/4 text-ocean-600 text-5xl animate-wave" />
-        <FaWater className="absolute top-10 left-1/4 text-ocean-200 text-4xl animate-float" /> {/* ripples */}
-        <FaWater className="absolute top-1/4 right-1/4 text-ocean-600 text-4xl animate-float" />
-
-        <FaFish className="absolute top-50 left-50 text-ocean-200 text-6xl animate-float" /> {/* fish */}
-        <FaFish className="absolute bottom-40 right-20 text-ocean-600 text-6xl opacity-100 animate-float" />
-        <MdWaves className="absolute bottom-20 left-1/8 text-ocean-200 text-5xl animate-wave" /> {/* wave */}
-        <MdWaves className="absolute bottom-20 right-1/8 text-ocean-600 text-5xl animate-wave" />
-        <FaWater className="absolute top-20 left-1/8 text-ocean-200 text-4xl animate-float" /> {/* ripples */}
-        <FaWater className="absolute top-1/4 right-1/8 text-ocean-600 text-4xl animate-float" />
-
-      </motion.div>
-
-      <motion.div 
-        className="bg-white rounded-3xl p-12 w-full max-w-md shadow-3xl relative z-10 border border-ocean-400/20"
+        className="bg-white rounded-2xl md:p-10 w-full max-w-md shadow-2xl relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Top accent bar */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-ocean-400 via-ocean-200 to-ocean-400 rounded-t-3xl" />
-
+        { /* inside form box */ }
         <motion.div variants={itemVariants}>
-          <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-ocean-600 to-ocean-400 bg-clip-text text-transparent">
+          <h2 className="md:text-3xl font-bold mb-3 bg-gradient-to-r from-ocean-600 to-ocean-400 bg-clip-text text-transparent">
             Login to WaveMinder
           </h2>
-          <p className="text-ocean-600 mb-8 opacity-80">
+          <p className="text-ocean-600 mb-8 opacity-60 text-sm md:text-base">
             Track marine life and ocean conservation
           </p>
         </motion.div>
         
         {error && (
           <motion.div 
-            className="bg-gradient-to-r from-red-50 to-red-100 text-red-700 px-4 py-3 rounded-xl mb-6 border-2 border-red-200 font-medium"
+            className="bg-gradient-to-r from-red-50 to-red-100 text-red-700 px-4 py-3 rounded-xl mb-6 border-2 border-red-200 font-medium text-sm"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: "spring", stiffness: 200 }}
@@ -131,9 +237,10 @@ const LoginForm = () => {
           </motion.div>
         )}
         
+        { /* email & password */}
         <form onSubmit={handleSubmit}>
           <motion.div className="mb-6" variants={itemVariants}>
-            <label htmlFor="email" className="block mb-2 text-ocean-600 font-semibold text-sm tracking-wide">
+            <label htmlFor="email" className="block mb-2 text-ocean-600 font-semibold text-sm">
               Email
             </label>
             <div className="relative">
@@ -144,34 +251,42 @@ const LoginForm = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full pl-12 pr-4 py-3.5 border-2 border-ocean-100 rounded-xl text-ocean-700 bg-ocean-50 focus:outline-none focus:border-ocean-400 focus:bg-white focus:shadow-lg focus:shadow-ocean-400/10 transition-all duration-300"
+                className="w-full pl-12 pr-12 py-3 border-2 border-ocean-100 rounded-xl text-ocean-700 bg-ocean-50 focus:outline-none focus:border-ocean-400 focus:bg-white focus:shadow-lg focus:shadow-ocean-400/10 transition-all duration-300"
                 required
               />
             </div>
           </motion.div>
 
           <motion.div className="mb-6" variants={itemVariants}>
-            <label htmlFor="password" className="block mb-2 text-ocean-600 font-semibold text-sm tracking-wide">
+            <label htmlFor="password" className="block mb-2 text-ocean-600 font-semibold text-sm">
               Password
             </label>
             <div className="relative">
               <FaLock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-ocean-400" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full pl-12 pr-4 py-3.5 border-2 border-ocean-100 rounded-xl text-ocean-700 bg-ocean-50 focus:outline-none focus:border-ocean-400 focus:bg-white focus:shadow-lg focus:shadow-ocean-400/10 transition-all duration-300"
+                className="w-full pl-12 pr-12 py-3.5 border-2 border-ocean-100 rounded-xl text-ocean-700 bg-ocean-50 focus:outline-none focus:border-ocean-400 focus:bg-white focus:shadow-lg focus:shadow-ocean-400/10 transition-all duration-300"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-ocean-400 hover:text-ocean-600 transition-colors focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+              </button>
             </div>
           </motion.div>
 
           <motion.button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-ocean-400 to-ocean-600 text-white rounded-xl font-semibold text-sm tracking-wider uppercase mt-2 disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group"
+            className="w-full py-3 bg-gradient-to-r from-ocean-400 to-ocean-600 text-white font-semibold text-sm tracking-wider uppercase mt-2 disabled:opacity-60 disabled:cursor-not-allowed relative overflow-hidden group"
             variants={itemVariants}
             whileHover={{ scale: loading ? 1 : 1.02, y: loading ? 0 : -2 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
@@ -189,7 +304,7 @@ const LoginForm = () => {
         </form>
 
         <motion.div 
-          className="mt-7 text-center text-ocean-600"
+          className="mt-7 text-center text-ocean-600 text-sm md:text-base"
           variants={itemVariants}
         >
           <p>
@@ -214,5 +329,7 @@ const LoginForm = () => {
     </div>
   );
 };
+
+   
 
 export default LoginForm;
