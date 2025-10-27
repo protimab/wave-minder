@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FaUmbrellaBeach, FaArrowLeft, FaMapMarkerAlt, FaTint, FaSmog, FaTemperatureHigh, FaSun, FaFish, FaCalendarAlt } from 'react-icons/fa';
 import { reportsAPI } from '../../services/api';
 import { QUALITY_SCALE, WILDLIFE_ACTIVITY_LEVELS } from '../../utils/constants';
-import '../sightings/Sightings.css';
 
 const BeachReportForm = () => {
   const [formData, setFormData] = useState({
@@ -53,168 +54,247 @@ const BeachReportForm = () => {
     }
   };
 
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1>Create Beach Report</h1>
-        <button onClick={() => navigate('/reports')} className="btn-secondary">
-          Cancel
-        </button>
-      </div>
-
-      {error && <div className="error-message">{error}</div>}
-
-      <form onSubmit={handleSubmit} className="form-card">
-        <div className="form-group">
-          <label htmlFor="beach_name">Beach Name *</label>
-          <input
-            type="text"
-            id="beach_name"
-            name="beach_name"
-            value={formData.beach_name}
-            onChange={handleChange}
-            placeholder="e.g., La Jolla Shores"
-            required
-          />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="latitude">Latitude</label>
-            <input
-              type="number"
-              id="latitude"
-              name="latitude"
-              value={formData.latitude}
-              onChange={handleChange}
-              step="0.000001"
-              placeholder="32.8509"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="longitude">Longitude</label>
-            <input
-              type="number"
-              id="longitude"
-              name="longitude"
-              value={formData.longitude}
-              onChange={handleChange}
-              step="0.000001"
-              placeholder="-117.2713"
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="water_quality">Water Quality (1-5) *</label>
-            <select
-              id="water_quality"
-              name="water_quality"
-              value={formData.water_quality}
-              onChange={handleChange}
-              required
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-100">
+      {/* header */}
+      <motion.header
+        className="bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 shadow-lg"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FaUmbrellaBeach className="text-white text-3xl" />
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Create Beach Report</h1>
+            </div>
+            <motion.button
+              onClick={() => navigate('/reports')}
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all backdrop-blur-sm border border-white/30 font-semibold"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              {QUALITY_SCALE.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              <FaArrowLeft />
+              <span className="hidden sm:inline">Cancel</span>
+            </motion.button>
           </div>
-          <div className="form-group">
-            <label htmlFor="pollution_level">Pollution Level (1-5) *</label>
-            <select
-              id="pollution_level"
-              name="pollution_level"
-              value={formData.pollution_level}
-              onChange={handleChange}
-              required
+        </div>
+      </motion.header>
+
+      {/* form */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          {error && (
+            <motion.div
+              className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r-lg"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
             >
-              {QUALITY_SCALE.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-            
+              {error}
+            </motion.div>
+          )}
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="water_temp">Water Temperature (°C)</label>
-            <input
-              type="number"
-              id="water_temp"
-              name="water_temp"
-              value={formData.water_temp}
-              onChange={handleChange}
-              step="0.1"
-              placeholder="20.5"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-2 border-orange-100 space-y-6">
+            {/* beach's name */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible">
+              <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                <FaMapMarkerAlt className="text-orange-500" />
+                Beach Name *
+              </label>
+              <input
+                type="text"
+                name="beach_name"
+                value={formData.beach_name}
+                onChange={handleChange}
+                placeholder="e.g., La Jolla Shores"
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                required
+              />
+            </motion.div>
 
-          <div className="form-group">
-            <label htmlFor="wildlife_activity">Wildlife Activity</label>
-            <select
-              id="wildlife_activity"
-              name="wildlife_activity"
-              value={formData.wildlife_activity}
-              onChange={handleChange}
+            {/* coordinates */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 0.1 }}>
+              <label className="text-orange-700 font-semibold mb-2 block">Location Coordinates</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="number"
+                  name="latitude"
+                  value={formData.latitude}
+                  onChange={handleChange}
+                  step="0.000001"
+                  placeholder="Latitude (e.g., 32.8509)"
+                  className="px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                />
+                <input
+                  type="number"
+                  name="longitude"
+                  value={formData.longitude}
+                  onChange={handleChange}
+                  step="0.000001"
+                  placeholder="Longitude (e.g., -117.2713)"
+                  className="px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                />
+              </div>
+            </motion.div>
+
+            {/* quality ratings */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                    <FaTint className="text-blue-500" />
+                    Water Quality (1-5) *
+                  </label>
+                  <select
+                    name="water_quality"
+                    value={formData.water_quality}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                    required
+                  >
+                    {QUALITY_SCALE.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                    <FaSmog className="text-gray-500" />
+                    Pollution Level (1-5) *
+                  </label>
+                  <select
+                    name="pollution_level"
+                    value={formData.pollution_level}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                    required
+                  >
+                    {QUALITY_SCALE.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* enviro conditions */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 0.3 }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                    <FaTemperatureHigh className="text-red-500" />
+                    Water Temperature (°C)
+                  </label>
+                  <input
+                    type="number"
+                    name="water_temp"
+                    value={formData.water_temp}
+                    onChange={handleChange}
+                    step="0.1"
+                    placeholder="20.5"
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                    <FaFish className="text-teal-500" />
+                    Wildlife Activity
+                  </label>
+                  <select
+                    name="wildlife_activity"
+                    value={formData.wildlife_activity}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                  >
+                    <option value="">Select level...</option>
+                    {WILDLIFE_ACTIVITY_LEVELS.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* weather */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
+              <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                <FaSun className="text-yellow-500" />
+                Weather Conditions
+              </label>
+              <input
+                type="text"
+                name="weather_conditions"
+                value={formData.weather_conditions}
+                onChange={handleChange}
+                placeholder="e.g., Sunny, calm winds"
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+              />
+            </motion.div>
+
+            {/* date */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 0.5 }}>
+              <label className="flex items-center gap-2 text-orange-700 font-semibold mb-2">
+                <FaCalendarAlt className="text-orange-500" />
+                Report Date *
+              </label>
+              <input
+                type="date"
+                name="report_date"
+                value={formData.report_date}
+                onChange={handleChange}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50"
+                required
+              />
+            </motion.div>
+
+            {/* notes */}
+            <motion.div variants={itemVariants} initial="hidden" animate="visible" transition={{ delay: 0.6 }}>
+              <label className="text-orange-700 font-semibold mb-2 block">Additional Notes</label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows="4"
+                placeholder="Any additional observations about the beach conditions..."
+                className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:border-orange-400 focus:outline-none transition-colors bg-orange-50/50 resize-none"
+              />
+            </motion.div>
+
+            {/* submit button */}
+            <motion.button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 bg-gradient-to-r from-orange-400 to-amber-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              whileHover={!loading ? { scale: 1.02, y: -2 } : {}}
+              whileTap={!loading ? { scale: 0.98 } : {}}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
             >
-              <option value="">Select level...</option>
-              {WILDLIFE_ACTIVITY_LEVELS.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="weather_conditions">Weather Conditions</label>
-          <input
-            type="text"
-            id="weather_conditions"
-            name="weather_conditions"
-            value={formData.weather_conditions}
-            onChange={handleChange}
-            placeholder="e.g., Sunny, calm winds"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="report_date">Report Date *</label>
-          <input
-            type="date"
-            id="report_date"
-            name="report_date"
-            value={formData.report_date}
-            onChange={handleChange}
-            max={new Date().toISOString().split('T')[0]}
-            required
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="notes">Additional Notes</label>
-          <textarea
-            id="notes"
-            name="notes"
-            value={formData.notes}
-            onChange={handleChange}
-            rows="4"
-            placeholder="Any additional observations..."
-          />
-        </div>
-
-        <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? 'Saving...' : 'Submit Report'}
-        </button>
-      </form>
+              {loading ? 'Submitting Report...' : 'Submit Beach Report'}
+            </motion.button>
+          </form>
+        </motion.div>
+      </main>
     </div>
   );
 };
