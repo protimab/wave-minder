@@ -17,7 +17,7 @@ const StatsCard = ({ title, value, icon, onClick }) => {
         borderRadius: '40px 20px 40px 20px',
       }}
     >
-      {/* Gradient overlay */}
+      {/* gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
       
       <div className="relative flex items-center gap-4">
