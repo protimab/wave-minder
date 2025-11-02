@@ -33,28 +33,56 @@ def calculate_beach_quality(water_quality: int, pollution_level: int, wildlife_a
 def sighting_to_response(s):
     """convert sighting tuple to response model"""
     return schemas.MarineSightingResponse(
-        id=s[0], species_name=s[2], species_type=s[3], location_name=s[4],
-        latitude=s[5], longitude=s[6], date_spotted=s[7], time_spotted=s[8],
-        group_size=s[9], behavior=s[10], notes=s[11], created_at=str(s[12]), user_name=s[13]
+        id=s['id'],
+        species_name=s['species_name'],
+        species_type=s['species_type'],
+        location_name=s['location_name'],
+        latitude=s['latitude'],
+        longitude=s['longitude'],
+        date_spotted=s['date_spotted'],
+        time_spotted=s['time_spotted'],
+        group_size=s['group_size'],
+        behavior=s['behavior'],
+        notes=s['notes'],
+        created_at=str(s['created_at']),
+        user_name=s['user_name']
     )
 
 def beach_report_to_response(r):
     """convert beach report tuple to response model"""
-    quality_score = calculate_beach_quality(r[5], r[6], r[8])
+    quality_score = calculate_beach_quality(r['water_quality'], r['pollution_level'], r['wildlife_activity'])
     return schemas.BeachReportResponse(
-        id=r[0], beach_name=r[2], latitude=r[3], longitude=r[4],
-        water_quality=r[5], pollution_level=r[6], water_temp=r[7],
-        wildlife_activity=r[8], notes=r[9], report_date=r[10], created_at=str(r[11]),
-        user_name=r[12], quality_score=quality_score
+        id=r['id'],
+        beach_name=r['beach_name'],
+        latitude=r['latitude'],
+        longitude=r['longitude'],
+        water_quality=r['water_quality'],
+        pollution_level=r['pollution_level'],
+        water_temp=r['water_temp'],
+        wildlife_activity=r['wildlife_activity'],
+        notes=r['notes'],
+        report_date=r['report_date'],
+        created_at=str(r['created_at']),
+        user_name=r['user_name'],
+        quality_score=quality_score
     )
 
 def conservation_to_response(a):
     """convert conservation action tuple to response model"""
     return schemas.ConservationActionResponse(
-        id=a[0], action_type=a[2], title=a[3], description=a[4],
-        location_name=a[5], latitude=a[6], longitude=a[7], participants=a[8],
-        waste_collected=a[9], area_covered=a[10],date_completed=a[11],
-        created_at=str(a[12]), user_name=a[13]
+        id=a['id'],
+        action_type=a['action_type'],
+        title=a['title'],
+        description=a['description'],
+        location_name=a['location_name'],
+        latitude=a['latitude'],
+        longitude=a['longitude'],
+        participants=a['participants'],
+        waste_collected=a['waste_collected'],
+        area_covered=a['area_covered'],
+        date_completed=a['date_completed'],
+        created_at=str(a['created_at']),
+        user_name=a['user_name']
     )
 
 # AUTH ENDPOINTS

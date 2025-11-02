@@ -58,21 +58,22 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [communityStats, userSightings, userReports, userActions, allSightings] = await Promise.all([
-        statsAPI.getCommunityStats(),
-        sightingsAPI.getAll({ user_id: user.id }),
-        reportsAPI.getAll({ user_id: user.id }),
-        actionsAPI.getAll({ user_id: user.id }),
-        sightingsAPI.getAll({ limit: 5 }),
-      ]);
+      const [communityStats, allSightings, allReports, allActions] = await Promise.all([
+      statsAPI.getCommunityStats(),
+      sightingsAPI.getAll({ limit: 100 }),
+      reportsAPI.getAll({ limit: 100 }),
+      actionsAPI.getAll({ limit: 100 }),
+    ]);
 
-      setStats(communityStats.data);
-      setUserStats({
-        sightings: userSightings.data.length,
-        reports: userReports.data.length,
-        actions: userActions.data.length,
-      });
-      setRecentSightings(allSightings.data);
+    // filter out the own current user data
+    setUserStats({
+      sightings: allSightings.data.filter(s => s.user_name === user.name).length,
+      reports: allReports.data.filter(r => r.user_name === user.name).length,
+      actions: allActions.data.filter(a => a.user_name === user.name).length,
+    });
+    
+    // show recent community sightings (latest 5)
+    setRecentSightings(allSightings.data.slice(0, 5));
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
