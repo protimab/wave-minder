@@ -54,26 +54,35 @@ const Dashboard = () => {
       setCurrentFactIndex((prev) => (prev + 1) % oceanFacts.length);
     }, 10000);
     return () => clearInterval(factInterval);
-  }, []);
+  }, [user.id]); 
 
   const fetchDashboardData = async () => {
     try {
-      const [communityStats, allSightings, allReports, allActions] = await Promise.all([
-      statsAPI.getCommunityStats(),
-      sightingsAPI.getAll({ limit: 100 }),
-      reportsAPI.getAll({ limit: 100 }),
-      actionsAPI.getAll({ limit: 100 }),
-    ]);
+      // fetch community stats and all community sightings
+      const [communityStats, allSightings] = await Promise.all([
+        statsAPI.getCommunityStats(),
+        sightingsAPI.getAll({ limit: 100 }),
+      ]);
 
-    // filter out the own current user data
-    setUserStats({
-      sightings: allSightings.data.filter(s => s.user_name === user.name).length,
-      reports: allReports.data.filter(r => r.user_name === user.name).length,
-      actions: allActions.data.filter(a => a.user_name === user.name).length,
-    });
-    
-    // show recent community sightings (latest 5)
-    setRecentSightings(allSightings.data.slice(0, 5));
+      // fetch user-specific data using user_id parameter
+      const [userSightingsResponse, userReportsResponse, userActionsResponse] = await Promise.all([
+        sightingsAPI.getAll({ limit: 100, user_id: user.id }),
+        reportsAPI.getAll({ limit: 100, user_id: user.id }),
+        actionsAPI.getAll({ limit: 100, user_id: user.id }),
+      ]);
+
+      // set user stats from the filtered API responses
+      setUserStats({
+        sightings: userSightingsResponse.data.length,
+        reports: userReportsResponse.data.length,
+        actions: userActionsResponse.data.length,
+      });
+      
+      // show recent community sightings (all users, latest 5)
+      setRecentSightings(allSightings.data.slice(0, 5));
+      
+      // set community stats
+      setStats(communityStats.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
