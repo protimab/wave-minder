@@ -5,20 +5,27 @@ import { FaUmbrellaBeach, FaArrowLeft, FaPlus, FaWater, FaFish } from 'react-ico
 import { MdWaves } from 'react-icons/md';
 import { GiShrimp } from 'react-icons/gi';
 import { reportsAPI } from '../../services/api';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import BeachReportCard from './BeachReportCard';
 
 const BeachReportsList = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    fetchReports();
-  }, []);
+  const userId = searchParams.get('user');
+  const isUserView = userId && parseInt(userId) === user?.id;
 
   const fetchReports = async () => {
     try {
-      const response = await reportsAPI.getAll({ limit: 100 });
+      const params = { limit: 100 };
+      if (userId) {
+        params.user_id = parseInt(userId);
+      }
+      const response = await reportsAPI.getAll(params);
       setReports(response.data);
     } catch (error) {
       console.error('Error fetching reports:', error);
@@ -26,6 +33,10 @@ const BeachReportsList = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchReports();
+  }, [userId]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this report?')) {

@@ -419,19 +419,19 @@ const Dashboard = () => {
                 title="Marine Sightings"
                 value={userStats.sightings}
                 icon="🐋"
-                onClick={() => navigate('/sightings')}
+                onClick={() => navigate(`/sightings?user=${user.id}`)}
               />
               <StatsCard
                 title="Beach Reports"
                 value={userStats.reports}
                 icon="🏖️"
-                onClick={() => navigate('/reports')}
+                onClick={() => navigate(`/reports?user=${user.id}`)}
               />
               <StatsCard
                 title="Conservation Actions"
                 value={userStats.actions}
                 icon="♻️"
-                onClick={() => navigate('/actions')}
+                onClick={() => navigate(`/actions?user=${user.id}`)}
               />
             </div>
           </motion.section>

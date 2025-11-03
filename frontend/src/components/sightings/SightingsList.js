@@ -1,25 +1,35 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FaFish, FaArrowLeft, FaPlus, FaWater } from 'react-icons/fa';
 import { GiWhaleTail, GiDolphin, GiShrimp, GiSeaTurtle } from 'react-icons/gi';
 import { MdWaves } from 'react-icons/md';
 import { sightingsAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import SightingCard from './SightingCard';
 
 const SightingsList = () => {
   const [sightings, setSightings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  
+  const userId = searchParams.get('user');
+  const isUserView = userId && parseInt(userId) === user?.id;
 
   useEffect(() => {
     fetchSightings();
-  }, []);
+  }, [userId]);
 
   const fetchSightings = async () => {
     try {
-      const response = await sightingsAPI.getAll({ limit: 100 });
+      const params = { limit: 100 };
+      if (userId) {
+        params.user_id = parseInt(userId);
+      }
+      const response = await sightingsAPI.getAll(params);
       setSightings(response.data);
     } catch (error) {
       console.error('Error fetching sightings:', error);
@@ -128,8 +138,12 @@ const SightingsList = () => {
             >
               <FaFish className="text-white text-4xl" />
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white">Marine Sightings</h1>
-                <p className="text-blue-100 text-sm">Community marine life observations</p>
+                <h1 className="text-3xl md:text-4xl font-bold text-white">
+                  {isUserView ? 'My Marine Sightings' : 'Marine Sightings'}
+                </h1>
+                <p className="text-blue-100 text-sm">
+                  {isUserView ? 'Your marine life observations' : 'Community marine life observations'}
+                </p>
               </div>
             </motion.div>
             <motion.div
@@ -174,7 +188,9 @@ const SightingsList = () => {
             <div className="flex items-center gap-3">
               <div className="text-3xl">🐋</div>
               <div>
-                <p className="text-blue-800 font-semibold">Total Sightings</p>
+                <p className="text-blue-800 font-semibold">
+                  {isUserView ? 'Your Sightings' : 'Total Sightings'}
+                </p>
                 <p className="text-2xl font-bold text-blue-600">{sightings.length}</p>
               </div>
             </div>
@@ -224,15 +240,19 @@ const SightingsList = () => {
             className="bg-white rounded-2xl shadow-xl p-12 text-center border-2 border-blue-200"
           >
             <div className="text-7xl mb-4">🐋</div>
-            <h3 className="text-2xl font-bold text-blue-700 mb-2">No Sightings Yet</h3>
-            <p className="text-blue-600 mb-6">Be the first to log a marine life encounter!</p>
+            <h3 className="text-2xl font-bold text-blue-700 mb-2">
+              {isUserView ? 'No Sightings Yet' : 'No Sightings Found'}
+            </h3>
+            <p className="text-blue-600 mb-6">
+              {isUserView ? 'Start logging your marine life encounters!' : 'Be the first to log a marine life encounter!'}
+            </p>
             <motion.button
               onClick={() => navigate('/sightings/new')}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg font-semibold shadow-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              Log First Sighting
+              Log {isUserView ? 'Your' : ''} First Sighting
             </motion.button>
           </motion.div>
         ) : (
