@@ -46,7 +46,7 @@ const BeachReportForm = () => {
       };
 
       await reportsAPI.create(submitData);
-      navigate('/reports');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create report');
     } finally {

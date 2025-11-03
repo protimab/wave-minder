@@ -125,8 +125,12 @@ const BeachReportsList = () => {
             >
               <FaUmbrellaBeach className="text-white text-4xl" />
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white">Beach Reports</h1>
-                <p className="text-orange-100 text-sm">Community beach condition monitoring</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">
+                {isUserView ? 'My Beach Reports' : 'Beach Reports'}
+              </h1>
+              <p className="text-orange-100 text-sm">
+                {isUserView ? 'Your beach condition reports' : 'Community beach condition monitoring'}
+              </p>
               </div>
             </motion.div>
             <motion.div

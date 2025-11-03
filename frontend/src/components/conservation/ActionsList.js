@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { FaRecycle, FaArrowLeft, FaPlus, FaLeaf, FaHandHoldingHeart, FaSeedling } from 'react-icons/fa';
 import { GiWindSlap, GiEarthAmerica } from 'react-icons/gi';
 import { actionsAPI } from '../../services/api';
+import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import ActionCard from './ActionCard';
 
 const ActionsList = () => {
@@ -11,14 +13,19 @@ const ActionsList = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
 
-  useEffect(() => {
-    fetchActions();
-  }, []);
+  const userId = searchParams.get('user');
+  const isUserView = userId && parseInt(userId) === user?.id;
 
   const fetchActions = async () => {
     try {
-      const response = await actionsAPI.getAll({ limit: 100 });
+      const params = { limit: 100 };
+      if (userId) {
+        params.user_id = parseInt(userId);
+      }
+      const response = await actionsAPI.getAll(params);
       setActions(response.data);
     } catch (error) {
       console.error('Error fetching actions:', error);
@@ -26,6 +33,10 @@ const ActionsList = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchActions();
+  }, [userId]);  
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this action?')) {
@@ -124,8 +135,12 @@ const ActionsList = () => {
             >
               <FaRecycle className="text-white text-4xl" />
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-white">Conservation Actions</h1>
-                <p className="text-emerald-100 text-sm">Community-driven environmental initiatives</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">
+                {isUserView ? 'My Conservation Actions' : 'Conservation Actions'}
+              </h1>
+              <p className="text-emerald-100 text-sm">
+                {isUserView ? 'Your environmental initiatives' : 'Community-driven environmental initiatives'}
+              </p>
               </div>
             </motion.div>
             <motion.div
