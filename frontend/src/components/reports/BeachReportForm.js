@@ -75,7 +75,7 @@ const BeachReportForm = () => {
               <h1 className="text-2xl md:text-3xl font-bold text-white">Create Beach Report</h1>
             </div>
             <motion.button
-              onClick={() => navigate('/reports')}
+              onClick={() => navigate('/dashboard')}
               className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all backdrop-blur-sm border border-white/30 font-semibold"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

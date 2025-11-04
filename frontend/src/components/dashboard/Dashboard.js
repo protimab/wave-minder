@@ -49,39 +49,49 @@ const Dashboard = () => {
   const heroScale = Math.max(0.95, 1 - scrollProgress * 0.167);
 
   useEffect(() => {
-    fetchDashboardData();
+    if (user && user.id) {
+      fetchDashboardData();
+    }
     const factInterval = setInterval(() => {
       setCurrentFactIndex((prev) => (prev + 1) % oceanFacts.length);
     }, 10000);
     return () => clearInterval(factInterval);
-  }, [user.id]); 
+  }, [user?.id]); // Add user.id as dependency
 
   const fetchDashboardData = async () => {
+    setLoading(true); // Reset loading state
+    console.log('Fetching dashboard data for user:', user.id, user.name); // Debug log
     try {
-      // fetch community stats and all community sightings
+      // Fetch community stats and all community sightings
       const [communityStats, allSightings] = await Promise.all([
         statsAPI.getCommunityStats(),
         sightingsAPI.getAll({ limit: 100 }),
       ]);
 
-      // fetch user-specific data using user_id parameter
+      console.log('All community sightings:', allSightings.data.length); // Debug log
+
+      // Fetch user-specific data using user_id parameter
       const [userSightingsResponse, userReportsResponse, userActionsResponse] = await Promise.all([
         sightingsAPI.getAll({ limit: 100, user_id: user.id }),
         reportsAPI.getAll({ limit: 100, user_id: user.id }),
         actionsAPI.getAll({ limit: 100, user_id: user.id }),
       ]);
 
-      // set user stats from the filtered API responses
+      console.log('User sightings:', userSightingsResponse.data.length); // Debug log
+      console.log('User reports:', userReportsResponse.data.length); // Debug log
+      console.log('User actions:', userActionsResponse.data.length); // Debug log
+
+      // Set user stats from the filtered API responses
       setUserStats({
         sightings: userSightingsResponse.data.length,
         reports: userReportsResponse.data.length,
         actions: userActionsResponse.data.length,
       });
       
-      // show recent community sightings (all users, latest 5)
+      // Show recent community sightings (all users, latest 5)
       setRecentSightings(allSightings.data.slice(0, 5));
       
-      // set community stats
+      // Set community stats
       setStats(communityStats.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
