@@ -29,6 +29,8 @@ const Dashboard = () => {
     actions: 0,
   });
   const [recentSightings, setRecentSightings] = useState([]);
+  const [recentReports, setRecentReports] = useState([]);
+  const [recentActions, setRecentActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentFactIndex, setCurrentFactIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -60,39 +62,31 @@ const Dashboard = () => {
   }, [user?.id]); // user.id dependency
 
   const fetchDashboardData = async () => {
-    setLoading(true); // reset loading state
-    console.log('Fetching dashboard data for user:', user.id, user.name); 
+    setLoading(true);
     try {
-      // Fetch community stats and all community sightings
-      const [communityStats, allSightings] = await Promise.all([
+      const [communityStats, allSightings, allReports, allActions] = await Promise.all([
         statsAPI.getCommunityStats(),
         sightingsAPI.getAll({ limit: 100 }),
+        reportsAPI.getAll({ limit: 100 }),
+        actionsAPI.getAll({ limit: 100 }),
       ]);
 
-      console.log('All community sightings:', allSightings.data.length); 
-
-      // user-specific data using user_id parameter
       const [userSightingsResponse, userReportsResponse, userActionsResponse] = await Promise.all([
         sightingsAPI.getAll({ limit: 100, user_id: user.id }),
         reportsAPI.getAll({ limit: 100, user_id: user.id }),
         actionsAPI.getAll({ limit: 100, user_id: user.id }),
       ]);
 
-      console.log('User sightings:', userSightingsResponse.data.length); 
-      console.log('User reports:', userReportsResponse.data.length); 
-      console.log('User actions:', userActionsResponse.data.length);
-
-      // set user stats from the filtered API responses
       setUserStats({
         sightings: userSightingsResponse.data.length,
         reports: userReportsResponse.data.length,
         actions: userActionsResponse.data.length,
       });
-      
-      // Show recent community sightings (all users -> latest 5)
+
       setRecentSightings(allSightings.data.slice(0, 5));
-      
-      // set community stats
+      setRecentReports(allReports.data.slice(0, 5));
+      setRecentActions(allActions.data.slice(0, 5));
+
       setStats(communityStats.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -100,7 +94,7 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
-
+ 
   {/* animation stuff */ }
   const floatVariants = {
     animate: {
@@ -488,7 +482,7 @@ const Dashboard = () => {
           </motion.section>
         </motion.div>
 
-        {/* community impact */}
+        {/* community impact
         {stats && (
           <motion.div
             className="relative mb-16"
@@ -535,13 +529,14 @@ const Dashboard = () => {
               />
             </div>
           </motion.div>
-        )}
+        )} */}
 
         {/* recent sightings */}
         <RecentSightings sightings={recentSightings} />
 
         { /* map */ }
         <motion.div
+          id="map"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
@@ -552,6 +547,8 @@ const Dashboard = () => {
           </h2>
           <OceanMap 
             sightings={recentSightings} 
+            reports={recentReports}
+            actions={recentActions}
           />
         </motion.div>
 
