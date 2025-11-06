@@ -2,28 +2,34 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Auth components
+// authentication
 import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
 
-// Dashboard
+// dashboard
 import Dashboard from './components/dashboard/Dashboard';
 
-// Sightings
+// sightings
 import SightingsList from './components/sightings/SightingsList';
 import SightingForm from './components/sightings/SightingForm';
 
-// Beach Reports
+// beach reports
 import BeachReportsList from './components/reports/BeachReportsList';
 import BeachReportForm from './components/reports/BeachReportForm';
 
-// Conservation Actions
+// conversations actions
 import ActionsList from './components/conservation/ActionsList';
 import ActionForm from './components/conservation/ActionForm';
 
+//ocean 
+import OceanDataDashboard from './components/ocean/OceanDataDashboard';
+
+//analytics 
+import AnalyticsDashboard from 'components/analytics/AnalyticsDashboard';
+
 import './App.css';
 
-// Protected Route Component
+// protected route component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -34,7 +40,7 @@ const ProtectedRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Public Route Component -> redirect if authenticated
+// public route component -> redirect if authenticated
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
@@ -48,7 +54,7 @@ const PublicRoute = ({ children }) => {
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
+      {/* public routes */}
       <Route 
         path="/login" 
         element={
@@ -66,7 +72,7 @@ function AppRoutes() {
         } 
       />
 
-      {/* Protected routes */}
+      {/* protected routes */}
       <Route 
         path="/dashboard" 
         element={
@@ -76,7 +82,7 @@ function AppRoutes() {
         } 
       />
 
-      {/* Marine Sightings */}
+      {/* marine Sightings */}
       <Route 
         path="/sightings" 
         element={
@@ -94,7 +100,7 @@ function AppRoutes() {
         } 
       />
 
-      {/* Beach Reports */}
+      {/* beach reports */}
       <Route 
         path="/reports" 
         element={
@@ -112,7 +118,7 @@ function AppRoutes() {
         } 
       />
 
-      {/* Conservation Actions */}
+      {/* conservation actions */}
       <Route 
         path="/actions" 
         element={
@@ -121,6 +127,42 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+
+      {/* ocean DB */}
+      <Route 
+        path="/ocean-data" 
+        element={
+          <ProtectedRoute>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-8">
+              <div className="max-w-7xl mx-auto">
+                <OceanDataDashboard 
+                  latitude={32.8509} 
+                  longitude={-117.2713} 
+                  locationName="La Jolla Cove" 
+                />
+              </div>
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* analytics */}
+      <Route 
+        path="/analytics" 
+        element={
+          <ProtectedRoute>
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-8">
+              <div className="max-w-7xl mx-auto">
+                <h1 className="text-4xl font-bold text-center mb-8">
+                  Community Analytics
+                </h1>
+                <AnalyticsDashboard />
+              </div>
+            </div>
+          </ProtectedRoute>
+        } 
+      />
+
       <Route 
         path="/actions/new" 
         element={
@@ -130,7 +172,7 @@ function AppRoutes() {
         } 
       />
 
-      {/* Default */}
+      {/* default */}
       <Route path="/" element={<Navigate to="/dashboard" />} />
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>

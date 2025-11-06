@@ -6,6 +6,7 @@ import { FaFish, FaSignOutAlt, FaQuoteLeft } from 'react-icons/fa';
 import { GiShrimp, GiJellyfish, GiWhaleTail, GiDolphin, GiTurtle } from 'react-icons/gi';
 import { MdWaves } from 'react-icons/md';
 import StatsCard from './StatsCard';
+import OceanMap from 'components/map/OceanMap';
 import RecentSightings from './RecentSightings';
 import { statsAPI, sightingsAPI, reportsAPI, actionsAPI } from '../../services/api';
 
@@ -56,11 +57,11 @@ const Dashboard = () => {
       setCurrentFactIndex((prev) => (prev + 1) % oceanFacts.length);
     }, 10000);
     return () => clearInterval(factInterval);
-  }, [user?.id]); // Add user.id as dependency
+  }, [user?.id]); // user.id dependency
 
   const fetchDashboardData = async () => {
-    setLoading(true); // Reset loading state
-    console.log('Fetching dashboard data for user:', user.id, user.name); // Debug log
+    setLoading(true); // reset loading state
+    console.log('Fetching dashboard data for user:', user.id, user.name); 
     try {
       // Fetch community stats and all community sightings
       const [communityStats, allSightings] = await Promise.all([
@@ -68,30 +69,30 @@ const Dashboard = () => {
         sightingsAPI.getAll({ limit: 100 }),
       ]);
 
-      console.log('All community sightings:', allSightings.data.length); // Debug log
+      console.log('All community sightings:', allSightings.data.length); 
 
-      // Fetch user-specific data using user_id parameter
+      // user-specific data using user_id parameter
       const [userSightingsResponse, userReportsResponse, userActionsResponse] = await Promise.all([
         sightingsAPI.getAll({ limit: 100, user_id: user.id }),
         reportsAPI.getAll({ limit: 100, user_id: user.id }),
         actionsAPI.getAll({ limit: 100, user_id: user.id }),
       ]);
 
-      console.log('User sightings:', userSightingsResponse.data.length); // Debug log
-      console.log('User reports:', userReportsResponse.data.length); // Debug log
-      console.log('User actions:', userActionsResponse.data.length); // Debug log
+      console.log('User sightings:', userSightingsResponse.data.length); 
+      console.log('User reports:', userReportsResponse.data.length); 
+      console.log('User actions:', userActionsResponse.data.length);
 
-      // Set user stats from the filtered API responses
+      // set user stats from the filtered API responses
       setUserStats({
         sightings: userSightingsResponse.data.length,
         reports: userReportsResponse.data.length,
         actions: userActionsResponse.data.length,
       });
       
-      // Show recent community sightings (all users, latest 5)
+      // Show recent community sightings (all users -> latest 5)
       setRecentSightings(allSightings.data.slice(0, 5));
       
-      // Set community stats
+      // set community stats
       setStats(communityStats.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -100,6 +101,7 @@ const Dashboard = () => {
     }
   };
 
+  {/* animation stuff */ }
   const floatVariants = {
     animate: {
       y: [0, -20, 0],
@@ -141,7 +143,6 @@ const Dashboard = () => {
           transition={{ duration: 1.5, repeat: Infinity }}
           style={{ fontFamily: "'Quicksand', sans-serif" }}
         >
-          Floating through calm seas...
         </motion.span>
       </div>
     );
@@ -254,7 +255,7 @@ const Dashboard = () => {
                 WaveMinder
               </h1>
               <p className="text-sm text-[#a0d8d1]" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Protecting Our Oceans Together
+                Protecting Our Oceans
               </p>
             </div>
           </div>
@@ -453,6 +454,37 @@ const Dashboard = () => {
                 onClick={() => navigate(`/actions?user=${user.id}`)}
               />
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+              <motion.button
+                onClick={() => navigate('/analytics')}
+                className="relative overflow-hidden group backdrop-blur-xl bg-white/20 p-8"
+                whileHover={{ scale: 1.05, y: -8 }}
+              >
+                <div className="text-7xl mb-4">📊</div>
+                <h3 className="text-2xl font-bold text-white">Analytics</h3>
+                <p className="text-white/80 text-sm">View community insights</p>
+              </motion.button>
+
+              <motion.button
+                onClick={() => navigate('/ocean-data')}
+                className="relative overflow-hidden group backdrop-blur-xl bg-white/20 p-8"
+                whileHover={{ scale: 1.05, y: -8 }}
+              >
+                <div className="text-7xl mb-4">🌊</div>
+                <h3 className="text-2xl font-bold text-white">Ocean Data</h3>
+                <p className="text-white/80 text-sm">Live tides & conditions</p>
+              </motion.button>
+
+              <motion.button
+                onClick={() => window.scrollTo({ top: document.querySelector('#map').offsetTop, behavior: 'smooth' })}
+                className="relative overflow-hidden group backdrop-blur-xl bg-white/20 p-8"
+                whileHover={{ scale: 1.05, y: -8 }}
+              >
+                <div className="text-7xl mb-4">🗺️</div>
+                <h3 className="text-2xl font-bold text-white">Interactive Map</h3>
+                <p className="text-white/80 text-sm">Explore locations</p>
+              </motion.button>
+            </div>
           </motion.section>
         </motion.div>
 
@@ -507,6 +539,21 @@ const Dashboard = () => {
 
         {/* recent sightings */}
         <RecentSightings sightings={recentSightings} />
+
+        { /* map */ }
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mt-16"
+        >
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-8 text-center">
+            Interactive Map
+          </h2>
+          <OceanMap 
+            sightings={recentSightings} 
+          />
+        </motion.div>
 
         {/* footer waves */}
         <motion.div 
