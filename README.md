@@ -1,7 +1,6 @@
 # 🌊 WaveMinder
 
 WaveMinder is a comprehensive ocean conservation platform that encourages users to track marine life, monitor beach conditions, and participate in 
-
 environmental protection efforts. Built with React and FastAPI, WaveMinder creates a community dedicated to protecting our oceans.
 
 ## 📍 Features
