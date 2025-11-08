@@ -1,6 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+
+// navigation
+import Navigation from './components/common/Navigation';
 
 // authentication
 import LoginForm from './components/auth/LoginForm';
@@ -17,17 +20,30 @@ import SightingForm from './components/sightings/SightingForm';
 import BeachReportsList from './components/reports/BeachReportsList';
 import BeachReportForm from './components/reports/BeachReportForm';
 
-// conversations actions
+// conservation actions
 import ActionsList from './components/conservation/ActionsList';
 import ActionForm from './components/conservation/ActionForm';
 
-//ocean 
+// ocean 
 import OceanDataDashboard from './components/ocean/OceanDataDashboard';
 
-//analytics 
+// analytics 
 import AnalyticsDashboard from 'components/analytics/AnalyticsDashboard';
 
 import './App.css';
+
+// layout wrapper for authenticated pages
+const AuthenticatedLayout = ({ children }) => {
+  const location = useLocation();
+  const showNav = !['/login', '/signup'].includes(location.pathname);
+
+  return (
+    <>
+      {showNav && <Navigation />}
+      {children}
+    </>
+  );
+};
 
 // protected route component
 const ProtectedRoute = ({ children }) => {
@@ -37,7 +53,7 @@ const ProtectedRoute = ({ children }) => {
     return <div className="loading-screen">Loading...</div>;
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? <AuthenticatedLayout>{children}</AuthenticatedLayout> : <Navigate to="/login" />;
 };
 
 // public route component -> redirect if authenticated
@@ -127,6 +143,14 @@ function AppRoutes() {
           </ProtectedRoute>
         } 
       />
+      <Route 
+        path="/actions/new" 
+        element={
+          <ProtectedRoute>
+            <ActionForm />
+          </ProtectedRoute>
+        } 
+      />
 
       {/* ocean DB */}
       <Route 
@@ -135,6 +159,9 @@ function AppRoutes() {
           <ProtectedRoute>
             <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-8">
               <div className="max-w-7xl mx-auto">
+                <h1 className="text-4xl font-bold text-center mb-8 text-blue-900">
+                  Ocean Data Dashboard
+                </h1>
                 <OceanDataDashboard 
                   latitude={32.8509} 
                   longitude={-117.2713} 
@@ -159,15 +186,6 @@ function AppRoutes() {
                 <AnalyticsDashboard />
               </div>
             </div>
-          </ProtectedRoute>
-        } 
-      />
-
-      <Route 
-        path="/actions/new" 
-        element={
-          <ProtectedRoute>
-            <ActionForm />
           </ProtectedRoute>
         } 
       />

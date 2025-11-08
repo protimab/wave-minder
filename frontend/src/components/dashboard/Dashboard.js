@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaFish, FaSignOutAlt, FaQuoteLeft } from 'react-icons/fa';
-import { GiShrimp, GiJellyfish, GiWhaleTail, GiDolphin, GiTurtle } from 'react-icons/gi';
+import { FaQuoteLeft } from 'react-icons/fa';
+import { GiWhaleTail, GiJellyfish, GiDolphin, GiTurtle } from 'react-icons/gi';
 import { MdWaves } from 'react-icons/md';
+import { FaFish } from 'react-icons/fa';
+import { GiShrimp } from 'react-icons/gi';
 import StatsCard from './StatsCard';
 import OceanMap from 'components/map/OceanMap';
 import RecentSightings from './RecentSightings';
@@ -20,7 +22,7 @@ const oceanFacts = [
 ];
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [userStats, setUserStats] = useState({
@@ -59,7 +61,7 @@ const Dashboard = () => {
       setCurrentFactIndex((prev) => (prev + 1) % oceanFacts.length);
     }, 10000);
     return () => clearInterval(factInterval);
-  }, [user?.id]); // user.id dependency
+  }, [user?.id]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -95,7 +97,6 @@ const Dashboard = () => {
     }
   };
  
-  {/* animation stuff */ }
   const floatVariants = {
     animate: {
       y: [0, -20, 0],
@@ -131,13 +132,6 @@ const Dashboard = () => {
         >
           <MdWaves />
         </motion.div>
-        <motion.span 
-          className="text-[#8fbcd4] text-xl font-light tracking-wider"
-          animate={{ opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          style={{ fontFamily: "'Quicksand', sans-serif" }}
-        >
-        </motion.span>
       </div>
     );
   }
@@ -234,50 +228,8 @@ const Dashboard = () => {
         </div>
       </motion.div>
 
-      {/* header */}
-      <motion.header 
-        className="sticky top-0 backdrop-blur-md bg-[#0d2f35]/70 shadow-lg border-b border-[#184a4a]/40 z-50"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <MdWaves className="text-[#74c9c5] text-5xl" />
-            <div>
-              <h1 className="text-4xl md:text-5xl font-semibold text-[#e1f7f5]" style={{ fontFamily: "'Playfair Display', serif" }}>
-                WaveMinder
-              </h1>
-              <p className="text-sm text-[#a0d8d1]" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Protecting Our Oceans
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-[#8ccac3] text-xs" style={{ fontFamily: "'Quicksand', sans-serif" }}>
-                Welcome back,
-              </p>
-              <span className="text-[#e1f7f5] font-semibold" style={{ fontFamily: "'Playfair Display', serif" }}>
-                {user?.name}
-              </span>
-            </div>
-            <motion.button
-              onClick={logout}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#1a4e4f]/60 hover:bg-[#1f5f5f]/70 text-[#e1f7f5] rounded-2xl border border-[#2d7676]/40 transition-all shadow-md"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
-              style={{ fontFamily: "'Quicksand', sans-serif" }}
-            >
-              <FaSignOutAlt />
-              <span className="hidden sm:inline font-medium">Logout</span>
-            </motion.button>
-          </div>
-        </div>
-      </motion.header>
-
       {/* ocean fact section */}
-      <motion.section className="relative z-10 py-12 px-4" style={{ opacity: heroOpacity, scale: heroScale }}>
+      <motion.section className="relative z-10 py-12 px-4 pt-24" style={{ opacity: heroOpacity, scale: heroScale }}>
         <div className="max-w-5xl mx-auto bg-[#0f3438]/70 backdrop-blur-md border border-[#1f5f5f]/40 p-10 rounded-3xl shadow-xl">
           <div className="flex items-start gap-4">
             <motion.div
@@ -400,7 +352,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* user contributions :p */}
+        {/* user contributions */}
         <motion.div
           className="relative mb-16"
           initial={{ opacity: 0 }}
@@ -481,55 +433,6 @@ const Dashboard = () => {
             </div>
           </motion.section>
         </motion.div>
-
-        {/* community impact
-        {stats && (
-          <motion.div
-            className="relative mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <div className="flex items-center gap-4 mb-8">
-              <motion.div 
-                className="h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent flex-1 rounded-full"
-                animate={{ scaleX: [0.8, 1, 0.8] }}
-                transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
-              />
-              <h2 className="text-4xl md:text-5xl font-bold text-white text-center drop-shadow-lg" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                Community Impact
-              </h2>
-              <motion.div 
-                className="h-1 bg-gradient-to-r from-transparent via-white/40 to-transparent flex-1 rounded-full"
-                animate={{ scaleX: [0.8, 1, 0.8] }}
-                transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <StatsCard
-                title="Total Actions"
-                value={stats.total_actions}
-                icon="🌟"
-              />
-              <StatsCard
-                title="Participants"
-                value={stats.total_participants}
-                icon="👥"
-              />
-              <StatsCard
-                title="Waste Collected"
-                value={`${stats.total_waste_kg.toFixed(1)} kg`}
-                icon="🗑️"
-              />
-              <StatsCard
-                title="Area Covered"
-                value={`${stats.total_area_sqm.toFixed(0)} m²`}
-                icon="📏"
-              />
-            </div>
-          </motion.div>
-        )} */}
 
         {/* recent sightings */}
         <RecentSightings sightings={recentSightings} />
